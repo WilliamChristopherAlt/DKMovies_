@@ -1,0 +1,105 @@
+List of All Table Names
+Countries  
+Genres  
+Ratings  
+Languages  
+Directors  
+Users  
+Theaters  
+Auditoriums  
+Seats  
+Movies  
+MovieGenre  
+ShowTimes  
+Tickets  
+PaymentMethods  
+TicketPayments  
+EmployeeRoles  
+Employees  
+MeasurementUnits  
+Concessions  
+Orders  
+OrderItems  
+OrderPayments  
+Reviews  
+Admins
+
+
+List of Tables with Their Columns
+Countries: CountryID, CountryName, Description  
+Genres: GenreID, GenreName, Description  
+Ratings: RatingID, RatingValue, Description  
+Languages: LanguageID, LanguageName, Description  
+Directors: DirectorID, FullName, DateOfBirth, Biography, CountryID  
+Users: UserID, Username, Email, PasswordHash, FullName, Phone, BirthDate, Gender, ProfileImagePath, CreatedAt  
+Theaters: TheaterID, Name, Location, Phone  
+Auditoriums: AuditoriumID, TheaterID, Name, Capacity  
+Seats: SeatID, AuditoriumID, RowLabel, SeatNumber  
+Movies: MovieID, Title, Description, DurationMinutes, RatingID, ReleaseDate, LanguageID, CountryID, DirectorID, ImagePath  
+MovieGenre: MovieID, GenreID  
+ShowTimes: ShowTimeID, MovieID, AuditoriumID, StartTime, DurationMinutes, SubtitleLanguageID, Is3D  
+Tickets: TicketID, UserID, ShowTimeID, SeatID, PurchaseTime, TotalPrice  
+PaymentMethods: MethodID, MethodName, Description  
+TicketPayments: PaymentID, TicketID, MethodID, PaymentStatus, PaidAmount, PaidAt  
+EmployeeRoles: RoleID, RoleName, Description  
+Employees: EmployeeID, TheaterID, RoleID, FullName, Email, Phone, Gender, DateOfBirth, CitizenID, Address, HireDate, Salary  
+MeasurementUnits: UnitID, UnitName, IsContinuous  
+Concessions: ConcessionID, Name, Description, Price, StockLeft, UnitID, IsAvailable, ImagePath  
+Orders: OrderID, UserID, OrderTime, TotalAmount, OrderStatus  
+OrderItems: OrderItemID, OrderID, ConcessionID, Quantity, PriceAtPurchase  
+OrderPayments: PaymentID, OrderID, MethodID, PaymentStatus, PaidAmount, PaidAt  
+Reviews: ReviewID, MovieID, UserID, Rating, Comment, CreatedAt, IsApproved  
+Admins: AdminID, EmployeeID, PasswordHash, CreatedAt
+
+
+List of Tables with Their UNIQUE Columns
+Countries: Name  
+Genres: Name  
+Ratings: Value  
+Languages: Name  
+Directors:  
+Users: Username, Email
+Theaters: Name, Location
+Auditoriums:
+Seats: (AuditoriumID, RowLabel, SeatNumber)  
+Movies: Title
+MovieGenre: (MovieID, GenreID)  
+ShowTimes:  
+Tickets: (SeatID, ShowTimeID)  
+PaymentMethods: Name  
+TicketPayments:  
+EmployeeRoles: Name  
+Employees: Email, CitizenID  
+MeasurementUnits: Name  
+Concessions: 
+Orders:  
+OrderItems:  
+OrderPayments:  
+Reviews:  
+Admins: EmployeeID, Username
+
+List of One-to-Many Relationships
+Countries: Directors, Movies  
+Genres: MovieGenre  
+Ratings: Movies  
+Languages: Movies, ShowTimes  
+Directors: Movies  
+Users: Tickets, Orders, Reviews  
+Theaters: Auditoriums, Employees  
+Auditoriums: Seats, ShowTimes  
+Seats: Tickets  
+Movies: MovieGenres, ShowTimes, Reviews  
+MovieGenre:  
+ShowTimes: Tickets  
+Tickets: TicketPayments  
+PaymentMethods: TicketPayments, OrderPayments  
+TicketPayments:  
+EmployeeRoles: Employees  
+Employees: Admins  
+MeasurementUnits: Concessions  
+Concessions: OrderItems  
+Orders: OrderItems, OrderPayments  
+OrderItems:  
+OrderPayments:  
+Reviews:  
+Admins:
