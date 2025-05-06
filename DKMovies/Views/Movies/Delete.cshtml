@@ -1,0 +1,42 @@
+@model DKMovies.Models.Movie
+
+@{
+    ViewData["Title"] = "Delete Movie";
+}
+
+<h1 class="mb-4 text-danger">Delete Confirmation</h1>
+<h5 class="mb-4">Are you sure you want to delete this movie?</h5>
+
+<div class="card mb-4 shadow-sm">
+    <div class="row g-0">
+        <div class="col-md-4">
+            @{
+                var imagePath = string.IsNullOrWhiteSpace(Model.ImagePath)
+                ? Url.Content("~/images/movies/default.jpg")
+                : Url.Content($"~/images/movies/{Model.ImagePath}");
+            }
+            <img src="@imagePath" class="img-fluid rounded-start" alt="@Model.Title" style="height: 100%; object-fit: cover;">
+        </div>
+        <div class="col-md-8">
+            <div class="card-body">
+                <h4 class="card-title">@Model.Title</h4>
+                <p class="card-text"><strong>Description:</strong> @Model.Description</p>
+                <p class="card-text"><strong>Duration:</strong> @Model.DurationMinutes minutes</p>
+                <p class="card-text"><strong>Rating:</strong> @Model.Rating?.Value</p>
+                <p class="card-text"><strong>Release Date:</strong> @(Model.ReleaseDate.HasValue ? Model.ReleaseDate.Value.ToShortDateString() : "N/A")</p>
+                <p class="card-text"><strong>Language:</strong> @Model.Language?.Name</p>
+                <p class="card-text"><strong>Country:</strong> @Model.Country?.Name</p>
+                <p class="card-text"><strong>Director:</strong> @Model.Director?.FullName</p>
+                <p class="card-text"><strong>Image File:</strong> @Model.ImagePath</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="ID" />
+    <div class="d-flex gap-2">
+        <input type="submit" value="Confirm Delete" class="btn btn-danger" />
+        <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>

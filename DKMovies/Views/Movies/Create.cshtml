@@ -1,0 +1,92 @@
+@model DKMovies.Models.Movie
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Movie</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <input asp-for="Description" class="form-control" />
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DurationMinutes" class="control-label"></label>
+                <input asp-for="DurationMinutes" class="form-control" />
+                <span asp-validation-for="DurationMinutes" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="RatingID" class="control-label"></label>
+                <select asp-for="RatingID" class ="form-control" asp-items="ViewBag.RatingID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="ReleaseDate" class="control-label"></label>
+                <input asp-for="ReleaseDate" class="form-control" />
+                <span asp-validation-for="ReleaseDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LanguageID" class="control-label"></label>
+                <select asp-for="LanguageID" class ="form-control" asp-items="ViewBag.LanguageID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="CountryID" class="control-label"></label>
+                <select asp-for="CountryID" class ="form-control" asp-items="ViewBag.CountryID"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="DirectorID" class="control-label"></label>
+                <select asp-for="DirectorID" class ="form-control" asp-items="ViewBag.DirectorID"></select>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Image</label>
+                <input type="file" name="image" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                <img id="imagePreview" src="#" alt="Image Preview" style="display:none; margin-top:10px; max-width:100%; height:auto;" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '#';
+                preview.style.display = 'none';
+            }
+        }
+    </script>
+}
+

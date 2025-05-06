@@ -1,0 +1,39 @@
+@model DKMovies.Models.Movie
+
+@{
+    ViewData["Title"] = "Movie Details";
+}
+
+<h1 class="mb-4">Movie Details</h1>
+
+<div class="card mb-4 shadow-sm">
+    <div class="row g-0">
+        <div class="col-md-4">
+            @{
+                var imagePath = string.IsNullOrWhiteSpace(Model.ImagePath)
+                ? Url.Content("~/images/movies/default.jpg")
+                : Url.Content($"~/images/movies/{Model.ImagePath}");
+            }
+            <img src="@imagePath" class="img-fluid rounded-start" alt="@Model.Title" style="height: 100%; object-fit: cover;">
+        </div>
+        <div class="col-md-8">
+            <div class="card-body">
+                <h4 class="card-title">@Model.Title</h4>
+                <p class="card-text"><strong>Description:</strong> @Model.Description</p>
+                <p class="card-text"><strong>Duration:</strong> @Model.DurationMinutes minutes</p>
+                <p class="card-text"><strong>Rating:</strong> @Model.Rating?.Value</p>
+                <p class="card-text"><strong>Release Date:</strong> @(Model.ReleaseDate.HasValue ? Model.ReleaseDate.Value.ToShortDateString() : "N/A")</p>
+
+                <p class="card-text"><strong>Language:</strong> @Model.Language?.Name</p>
+                <p class="card-text"><strong>Country:</strong> @Model.Country?.Name</p>
+                <p class="card-text"><strong>Director:</strong> @Model.Director?.FullName</p>
+                <p class="card-text"><strong>Image File:</strong> @Model.ImagePath</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Edit" asp-route-id="@Model?.ID" class="btn btn-primary">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

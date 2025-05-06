@@ -1,0 +1,63 @@
+﻿@model DKMovies.Models.Employee
+
+@{
+    ViewData["Title"] = "Delete";
+}
+
+<h1>Delete</h1>
+
+<h3>Are you sure you want to delete this?</h3>
+<div>
+    <h4>Employee</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Theater)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Theater.Location)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Role)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Role.Name)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.FullName)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.FullName)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Email)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Email)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Phone)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Phone)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Gender)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Gender)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.DateOfBirth)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.DateOfBirth)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.CitizenID)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.CitizenID)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Address)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Address)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.HireDate)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.HireDate)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.Salary)</dt>
+        <dd class="col-sm-10">@Html.DisplayFor(model => model.Salary)</dd>
+
+        <dt class="col-sm-2">@Html.DisplayNameFor(model => model.ProfileImagePath)</dt>
+        <dd class="col-sm-10">
+            @{
+                var imagePath = string.IsNullOrWhiteSpace(Model.ProfileImagePath)
+                ? Url.Content("~/images/employees/default.jpg")
+                : Url.Content($"~/images/employees/{Model.ProfileImagePath}");
+            }
+            <img src="@imagePath" alt="Profile Image" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;" />
+        </dd>
+    </dl>
+
+    <form asp-action="Delete">
+        <input type="hidden" asp-for="ID" />
+        <input type="submit" value="Delete" class="btn btn-danger" /> |
+        <a asp-action="Index">Back to List</a>
+    </form>
+</div>

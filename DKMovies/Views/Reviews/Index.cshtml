@@ -1,0 +1,43 @@
+@model IEnumerable<DKMovies.Models.Review>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Reviews</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Movie)</th>
+            <th>@Html.DisplayNameFor(model => model.User)</th>
+            <th>@Html.DisplayNameFor(model => model.Rating)</th>
+            <th>@Html.DisplayNameFor(model => model.Comment)</th>
+            <th>@Html.DisplayNameFor(model => model.CreatedAt)</th>
+            <th>@Html.DisplayNameFor(model => model.IsApproved)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Movie.Title)</td>
+                <td>@Html.DisplayFor(modelItem => item.User.Username)</td>
+                <td>@Html.DisplayFor(modelItem => item.Rating)</td>
+                <td>@Html.DisplayFor(modelItem => item.Comment)</td>
+                <td>@Html.DisplayFor(modelItem => item.CreatedAt)</td>
+                <td>
+                    <form asp-action="ToggleApproval" method="post">
+                        <input type="hidden" name="id" value="@item.ID" />
+                        <input type="checkbox" name="isApproved" value="true" @(item.IsApproved ? "checked" : "") onchange="this.form.submit()" />
+                    </form>
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

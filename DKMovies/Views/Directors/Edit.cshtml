@@ -1,0 +1,84 @@
+﻿@model DKMovies.Models.Director
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Director</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ID" />
+            <div class="form-group">
+                <label asp-for="FullName" class="control-label"></label>
+                <input asp-for="FullName" class="form-control" />
+                <span asp-validation-for="FullName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DateOfBirth" class="control-label"></label>
+                <input asp-for="DateOfBirth" class="form-control" />
+                <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Biography" class="control-label"></label>
+                <input asp-for="Biography" class="form-control" />
+                <span asp-validation-for="Biography" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CountryID" class="control-label"></label>
+                <select asp-for="CountryID" class="form-control" asp-items="ViewBag.CountryID"></select>
+                <span asp-validation-for="CountryID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Current Profile Image</label><br />
+                @if (!string.IsNullOrEmpty(Model.ProfileImagePath))
+                {
+                    <img src="~/images/directors/@Model.ProfileImagePath" alt="Profile Image" style="max-width:100%; height:auto; margin-bottom:10px;" />
+                }
+                else
+                {
+                    <p>No profile image.</p>
+                }
+            </div>
+            <div class="form-group">
+                <label class="control-label">Upload New Profile Image</label>
+                <input type="file" name="profileImage" class="form-control" accept="image/*" onchange="previewImage(this)" />
+                <img id="imagePreview" src="#" alt="Image Preview" style="display:none; margin-top:10px; max-width:100%; height:auto;" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        function previewImage(input) {
+            const preview = document.getElementById('imagePreview');
+            const file = input.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.src = '#';
+                preview.style.display = 'none';
+            }
+        }
+    </script>
+}
