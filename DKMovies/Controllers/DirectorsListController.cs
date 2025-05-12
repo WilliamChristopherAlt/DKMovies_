@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using DKMovies.Models;
 using System.Linq;
 using System.Threading.Tasks;
-
+ 
 namespace DKMovies.Controllers
 {
     public class DirectorsListController : Controller
