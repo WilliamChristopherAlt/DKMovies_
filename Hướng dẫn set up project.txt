@@ -1,0 +1,9 @@
+1. Tạo project vs2022 mới.
+2. Clone từ repo: https://github.com/WilliamChristopherAlt/DKMovies_
+3. Vào thư mục Movies có 3 file: design.sql, data.sql, delete_design.sql
+4. Tạo cơ sở dữ liệu mới tên DKMovies trong MicrosoftSQLServer, sau đó chạy code design.sql, và data.sql (thiết kế dữ liệu trước, sau đó chèn dữ liệu)
+5. Vào project vs2022 đã clone, vào file appsettings.json, chỉnh chuỗi:   "DefaultConnection": "Server=DESKTOP-0BQ9RBN\\SQLEXPRESS;Database=DKMovies;Integrated Security=True;TrustServerCertificate=True;" thành chuỗi đúng.
+6. Chạy project
+
+
+Chạy file delete_design.sql rồi chạy design.sql và data.sql nếu cần reset csdl
