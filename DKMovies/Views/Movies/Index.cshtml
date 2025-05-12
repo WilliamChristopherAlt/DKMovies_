@@ -13,9 +13,9 @@
 <div class="row row-cols-1 row-cols-md-3 g-4">
     @foreach (var movie in Model)
     {
-        var imagePath = string.IsNullOrWhiteSpace(movie.ImagePath)
-        ? Url.Content("~/images/movies/default.jpg")
-        : Url.Content($"~/images/movies/{movie.ImagePath}");
+        var imagePath = string.IsNullOrWhiteSpace(movie.PosterImagePath)
+        ? Url.Content("~/images/movie_posters/default.jpg")
+        : Url.Content($"~/images/movie_posters/{movie.PosterImagePath}");
 
         <div class="col">
             <div class="card h-100 shadow-sm border-0">

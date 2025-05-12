@@ -46,6 +46,7 @@ namespace DKMovies.Controllers
             if (user != null && user.PasswordHash == HashPassword(password))
             {
                 HttpContext.Session.SetString("Username", user.Username);
+                HttpContext.Session.SetString("UserID", user.ID.ToString());
                 HttpContext.Session.SetString("Role", "User"); // Assign the "User" role in the session
                 return RedirectToAction("Index", "Home");
             }
@@ -113,6 +114,7 @@ namespace DKMovies.Controllers
             if (admin != null && admin.PasswordHash == HashPassword(password))
             {
                 HttpContext.Session.SetString("Username", admin.Username);
+                HttpContext.Session.SetString("UserID", admin.ID.ToString());
                 HttpContext.Session.SetString("Role", "Admin"); // Assign the "Admin" role in the session
                 return RedirectToAction("AdminDashboard", "Admin");
             }

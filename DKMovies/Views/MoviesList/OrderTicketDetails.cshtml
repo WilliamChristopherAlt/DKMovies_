@@ -1,0 +1,92 @@
+﻿@model List<DKMovies.Models.Seat>
+@{
+    var showTime = ViewData["ShowTime"] as DKMovies.Models.ShowTime;
+    var takenSeats = ViewData["TakenSeats"] as List<int> ?? new List<int>();
+}
+
+@if (Model == null || !Model.Any())
+{
+    <p>No seats available for this showtime.</p>
+}
+else
+{
+    <div class="container mt-4">
+        <h2>Select Seats for @showTime.Movie.Title at @showTime.StartTime.ToString("f")</h2>
+
+        <form asp-action="ConfirmOrder" method="post">
+            <input type="hidden" name="ShowTimeID" value="@showTime.ID" />
+
+            <div class="d-flex gap-4">
+
+                <!-- Loop through sections (1-6, 7-12, 13-18) -->
+                @for (int section = 0; section < 3; section++)
+                {
+                    int minSeat = section * 6 + 1;
+                    int maxSeat = minSeat + 5;
+
+                    <div>
+                        <h5>Seats @minSeat–@maxSeat</h5>
+                        @foreach (var rowGroup in Model.Where(s => s.SeatNumber >= minSeat && s.SeatNumber <= maxSeat)
+                       .GroupBy(s => s.RowLabel)
+                       .OrderBy(g => g.Key))
+                        {
+                            <div class="d-flex mb-1" style="gap: 4px;">
+                                @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber))
+                                {
+                                    var isTaken = takenSeats.Contains(seat.ID);
+                                    <div>
+                                        <input type="checkbox"
+                                               id="seat-@seat.ID"
+                                               name="SelectedSeats"
+                                               value="@seat.ID"
+                                               hidden
+                                        @(isTaken ? "disabled" : "") />
+
+                                        <label for="seat-@seat.ID"
+                                               class="btn btn-sm @(isTaken ? "btn-secondary disabled unclickable" : "btn-outline-success")"
+                                               style="min-width: 50px;"
+                                               onclick="@(isTaken ? "return false;" : "toggleSeatSelection(this)")">
+                                            @seat.RowLabel@seat.SeatNumber
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
+            <button type="submit" class="btn btn-success mt-3" onclick="this.innerText='Processing...';">Proceed to Payment</button>
+        </form>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">
+        @TempData["Success"]
+    </div>
+}
+
+
+<script>
+    function toggleSeatSelection(label) {
+        if (label.classList.contains("btn-outline-success")) {
+            label.classList.remove("btn-outline-success");
+            label.classList.add("btn-success");
+        } else {
+            label.classList.add("btn-outline-success");
+            label.classList.remove("btn-success");
+        }
+
+        // Synchronize the hidden checkbox with the button click
+        const checkbox = document.getElementById(label.htmlFor);
+        checkbox.checked = !checkbox.checked;
+    }
+</script>

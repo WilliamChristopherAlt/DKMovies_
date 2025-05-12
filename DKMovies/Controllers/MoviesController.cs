@@ -87,7 +87,7 @@ namespace DKMovies.Controllers
                 // Handle image upload
                 if (image != null && image.Length > 0)
                 {
-                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "movies");
+                    var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "movie_posters");
                     Directory.CreateDirectory(uploadsFolder); // Ensure folder exists
 
                     var fileExt = Path.GetExtension(image.FileName);
@@ -99,7 +99,7 @@ namespace DKMovies.Controllers
                         await image.CopyToAsync(stream);
                     }
 
-                    movie.ImagePath = uniqueName;
+                    movie.PosterImagePath = uniqueName;
                 }
 
                 _context.Add(movie);
@@ -169,7 +169,7 @@ namespace DKMovies.Controllers
                     // Handle image upload if provided
                     if (image != null && image.Length > 0)
                     {
-                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "movies");
+                        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "movie_posters");
                         Directory.CreateDirectory(uploadsFolder); // Ensure the folder exists
 
                         var fileExt = Path.GetExtension(image.FileName);
@@ -181,7 +181,7 @@ namespace DKMovies.Controllers
                             await image.CopyToAsync(stream);
                         }
 
-                        movie.ImagePath = uniqueName;
+                        movie.PosterImagePath = uniqueName;
                     }
 
                     _context.Update(movie);

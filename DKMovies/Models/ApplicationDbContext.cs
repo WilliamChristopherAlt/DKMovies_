@@ -23,6 +23,7 @@ namespace DKMovies.Models
         public DbSet<MovieGenre> MovieGenres { get; set; }
         public DbSet<ShowTime> ShowTimes { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketSeat> TicketSeats { get; set; }
         public DbSet<TicketPayment> TicketPayments { get; set; }
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<EmployeeRole> EmployeeRoles { get; set; }
@@ -49,6 +50,7 @@ namespace DKMovies.Models
             modelBuilder.Entity<MovieGenre>().ToTable("MovieGenres");
             modelBuilder.Entity<ShowTime>().ToTable("ShowTimes");
             modelBuilder.Entity<Ticket>().ToTable("Tickets");
+            modelBuilder.Entity<TicketSeat>().ToTable("TicketSeats");
             modelBuilder.Entity<PaymentMethod>().ToTable("PaymentMethods");
             modelBuilder.Entity<TicketPayment>().ToTable("TicketPayments");
             modelBuilder.Entity<MeasurementUnit>().ToTable("MeasurementUnits");
@@ -156,10 +158,6 @@ namespace DKMovies.Models
             // 13. Tickets
             modelBuilder.Entity<Ticket>()
                 .HasKey(t => t.ID);
-
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(t => new { t.SeatID, t.ShowTimeID })
-                .IsUnique();
 
             // 14. PaymentMethods
             modelBuilder.Entity<PaymentMethod>()
@@ -327,11 +325,7 @@ namespace DKMovies.Models
                 .OnDelete(DeleteBehavior.Cascade);
 
             // 9. Seats
-            modelBuilder.Entity<Seat>()
-                .HasMany(s => s.Tickets)
-                .WithOne(t => t.Seat)
-                .HasForeignKey(t => t.SeatID)
-                .OnDelete(DeleteBehavior.Restrict);
+
 
             // 10. Movies
             modelBuilder.Entity<Movie>()

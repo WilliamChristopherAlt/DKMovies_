@@ -11,9 +11,9 @@
     <div class="row g-0">
         <div class="col-md-4">
             @{
-                var imagePath = string.IsNullOrWhiteSpace(Model.ImagePath)
+                var imagePath = string.IsNullOrWhiteSpace(Model.PosterImagePath)
                 ? Url.Content("~/images/movies/default.jpg")
-                : Url.Content($"~/images/movies/{Model.ImagePath}");
+                : Url.Content($"~/images/movies/{Model.PosterImagePath}");
             }
             <img src="@imagePath" class="img-fluid rounded-start" alt="@Model.Title" style="height: 100%; object-fit: cover;">
         </div>
@@ -27,7 +27,7 @@
                 <p class="card-text"><strong>Language:</strong> @Model.Language?.Name</p>
                 <p class="card-text"><strong>Country:</strong> @Model.Country?.Name</p>
                 <p class="card-text"><strong>Director:</strong> @Model.Director?.FullName</p>
-                <p class="card-text"><strong>Image File:</strong> @Model.ImagePath</p>
+                <p class="card-text"><strong>Image File:</strong> @Model.PosterImagePath</p>
             </div>
         </div>
     </div>

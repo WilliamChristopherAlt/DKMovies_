@@ -226,7 +226,7 @@ namespace DKMovies.Models
         [Display(Name = "Seat Number")]
         public int SeatNumber { get; set; }
 
-        public ICollection<Ticket> Tickets { get; set; }
+        public ICollection<TicketSeat> TicketSeats { get; set; }
     }
 
     // 10. MOVIES
@@ -273,8 +273,11 @@ namespace DKMovies.Models
 
         public Director Director { get; set; }
 
-        [Display(Name = "Image Path")]
-        public string? ImagePath { get; set; }
+        [Display(Name = "Poster Image Path")]
+        public string? PosterImagePath { get; set; }
+
+        [Display(Name = "Wallpaper Image Path")]
+        public string? WallpaperImagePath { get; set; }
 
         public ICollection<MovieGenre> MovieGenres { get; set; }
         public ICollection<ShowTime> ShowTimes { get; set; }
@@ -330,7 +333,7 @@ namespace DKMovies.Models
         public int? SubtitleLanguageID { get; set; }
 
         [ForeignKey("SubtitleLanguageID")]
-        public Language SubtitleLanguage { get; set; }
+        public Language? SubtitleLanguage { get; set; }
 
         [Display(Name = "3D")]
         public bool Is3D { get; set; }
@@ -357,12 +360,6 @@ namespace DKMovies.Models
         [ForeignKey("ShowTimeID")]
         public ShowTime ShowTime { get; set; }
 
-        [Display(Name = "Seat ID")]
-        public int SeatID { get; set; }
-
-        [ForeignKey("SeatID")]
-        public Seat Seat { get; set; }
-
         [Display(Name = "Purchase Time")]
         public DateTime PurchaseTime { get; set; }
 
@@ -370,6 +367,26 @@ namespace DKMovies.Models
         public decimal TotalPrice { get; set; }
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
+        public ICollection<TicketSeat> TicketSeats { get; set; }
+    }
+
+    public class TicketSeat
+    {
+        [Key]
+        [Display(Name = "Ticket Seat ID")]
+        public int ID { get; set; }
+
+        [Display(Name = "Ticket ID")]
+        public int TicketID { get; set; }
+
+        [ForeignKey("TicketID")]
+        public Ticket Ticket { get; set; }
+
+        [Display(Name = "Seat ID")]
+        public int SeatID { get; set; }
+
+        [ForeignKey("SeatID")]
+        public Seat Seat { get; set; }
     }
 
     // 14. PAYMENT METHODS

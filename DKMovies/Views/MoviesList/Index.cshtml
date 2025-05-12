@@ -1,0 +1,128 @@
+﻿@model IEnumerable<DKMovies.Models.Movie>
+
+@{
+    ViewData["Title"] = "Browse Movies";
+    var currentPage = (int)ViewData["CurrentPage"];
+    var totalPages = (int)ViewData["TotalPages"];
+}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .movie-section {
+        padding: 40px 20px;
+    }
+
+    .movie-title {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 8px;
+        color: #222;
+    }
+
+    .movie-meta {
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .movie-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+
+    .card:hover {
+        transform: scale(1.02);
+        transition: transform 0.2s ease-in-out;
+        z-index: 1;
+    }
+
+    .card-img-top {
+        border-radius: 4px 4px 0 0;
+    }
+
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+
+    .pagination .page-link {
+        color: #0d6efd;
+    }
+</style>
+
+<div class="movie-section container">
+    <h1 class="mb-4 text-center">Browse Movies</h1>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
+        @foreach (var movie in Model)
+        {
+            var imagePath = string.IsNullOrWhiteSpace(movie.PosterImagePath)
+            ? Url.Content("~/images/movie_posters/default.jpg")
+            : Url.Content($"~/images/movie_posters/{movie.PosterImagePath}");
+
+            <div class="col">
+                <a asp-controller="MoviesList" asp-action="Details" asp-route-id="@movie.ID" class="movie-link">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="ratio ratio-2x3" style="aspect-ratio: 2 / 3;">
+                            <img src="@imagePath" class="card-img-top" alt="@movie.Title" style="object-fit: cover; width: 100%; height: 100%;">
+                        </div>
+                        @{
+                            var avgDict = ViewData["AverageRatings"] as Dictionary<int, double>;
+                            var avg = avgDict != null && avgDict.ContainsKey(movie.ID) ? avgDict[movie.ID] : (double?)null;
+                        }
+
+                        <div class="card-body text-center">
+                            <h5 class="movie-title">@movie.Title</h5>
+                            <p class="movie-meta">@movie.Language?.Name | @movie.Country?.Name</p>
+                            <p class="movie-meta">
+                                <span class="text-warning">⭐</span>
+                                @if (avg.HasValue)
+                                {
+                                    @($"{avg.Value:F1}")
+                                }
+                                else
+                                {
+                                    <text>No reviews</text>
+                                }
+                                | Rated: @movie.Rating?.Value | @movie.DurationMinutes mins
+                            </p>
+                        </div>
+
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+
+    <div class="mt-4 text-center">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                @if (currentPage > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-controller="MoviesList" asp-action="Index" asp-route-page="@(currentPage - 1)">Previous</a>
+                    </li>
+                }
+
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" asp-controller="MoviesList" asp-action="Index" asp-route-page="@i">@i</a>
+                    </li>
+                }
+
+                @if (currentPage < totalPages)
+                {
+                    <li class="page-item">
+                        <a class="page-link" asp-controller="MoviesList" asp-action="Index" asp-route-page="@(currentPage + 1)">Next</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+</div>

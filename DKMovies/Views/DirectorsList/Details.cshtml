@@ -1,0 +1,61 @@
+﻿@model DKMovies.Models.Director
+@{
+    ViewData["Title"] = Model.FullName;
+    var imagePath = string.IsNullOrWhiteSpace(Model.ProfileImagePath)
+        ? Url.Content("~/images/directors/default.jpg")
+        : Url.Content($"~/images/directors/{Model.ProfileImagePath}");
+}
+
+<div class="container mt-5">
+    <div class="row">
+        <!-- Left: Profile Image -->
+        <div class="col-md-3 mb-4">
+            <div class="shadow rounded overflow-hidden position-relative" style="padding-bottom: 150%;">
+                <img src="@imagePath" alt="@Model.FullName" class="position-absolute w-100 h-100" style="object-fit: cover;">
+            </div>
+        </div>
+
+        <!-- Right: Info -->
+        <div class="col-md-9">
+            <h2 class="mb-3">@Model.FullName</h2>
+
+            <div class="mb-2">
+                <strong>Date of Birth:</strong>
+                @(Model.DateOfBirth.HasValue ? Model.DateOfBirth.Value.ToString("MMMM d, yyyy") : "N/A")
+            </div>
+
+            <div class="mb-2">
+                <strong>Country:</strong>
+                @(Model.Country != null ? Model.Country.Name : "N/A")
+            </div>
+
+            <div class="mb-3">
+                <strong>Biography:</strong>
+                <p>@Model.Biography</p>
+            </div>
+
+            <h4>Directed Movies</h4>
+            @if (Model.Movies != null && Model.Movies.Any())
+            {
+                <ul class="list-group">
+                    @foreach (var movie in Model.Movies)
+                    {
+                        <li class="list-group-item">
+                            <a asp-controller="MoviesList" asp-action="Details" asp-route-id="@movie.ID" class="text-decoration-none">
+                                @movie.Title
+                            </a>
+                        </li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>No movies found for this director.</p>
+            }
+        </div>
+    </div>
+
+    <a asp-controller="MoviesList" asp-action="Index" class="btn btn-link text-dark mt-3">
+        <i class="bi bi-arrow-left"></i> Back to Movies
+    </a>
+</div>
