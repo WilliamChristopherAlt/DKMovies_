@@ -36,23 +36,41 @@ namespace DKMovies.Controllers
             return View();
         }
 
-        // POST: Login (Handle user login)
+        // POST: Login (Handle user login or admin login)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
         {
-            Console.WriteLine(HashPassword(password));
+            var hashedPassword = HashPassword(password);
+
+            // First, try to find a user in the Users table
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-            if (user != null && user.PasswordHash == HashPassword(password))
+
+            if (user != null && user.PasswordHash == hashedPassword)
             {
                 HttpContext.Session.SetString("Username", user.Username);
                 HttpContext.Session.SetString("UserID", user.ID.ToString());
-                HttpContext.Session.SetString("Role", "User"); // Assign the "User" role in the session
+                HttpContext.Session.SetString("Role", "User");
                 return RedirectToAction("Index", "Home");
             }
+
+            // If not found in Users, try to find an admin
+            var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
+
+            if (admin != null && admin.PasswordHash == hashedPassword)
+            {
+                HttpContext.Session.SetString("Username", admin.Username);
+                HttpContext.Session.SetString("UserID", admin.ID.ToString());
+                HttpContext.Session.SetString("Role", "Admin");
+                return RedirectToAction("Home", "Index");
+            }
+            Console.WriteLine("Cant log in");
+
+            // If neither match
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View();
         }
+
 
         // Sign Up view for normal users (GET)
         [HttpGet]
