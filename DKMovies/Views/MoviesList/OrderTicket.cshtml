@@ -1,61 +1,77 @@
 ﻿@model List<DKMovies.Models.ShowTime>
 @{
     var movie = ViewData["Movie"] as DKMovies.Models.Movie;
-    ViewData["Title"] = $"Showtimes for {movie?.Title}";
-    string search = ViewData["Search"] as string;
-    string date = ViewData["Date"] as string;
+    var date = ViewData["Date"] as string;
+    var selectedTheaterId = ViewData["SelectedTheaterId"]?.ToString();
+
+    // Get ALL available dates from ALL showtimes
+    var availableDates = Model.Select(s => s.StartTime.Date).Distinct().OrderBy(d => d).ToList();
+
+    // Default to the first date if none is selected
+    if (string.IsNullOrEmpty(date) || !availableDates.Any(d => d.ToString("yyyy-MM-dd") == date))
+    {
+        date = availableDates.First().ToString("yyyy-MM-dd");
+    }
+
+    var selectedDate = DateTime.Parse(date);
+
+    // All theaters that have showtimes on the selected date
+    var theaters = Model
+        .Where(s => s.StartTime.Date == selectedDate)
+        .Select(s => s.Auditorium.Theater)
+        .Distinct()
+        .OrderBy(t => t.Name)
+        .ToList();
 }
 
-<div class="container mt-4">
-    <h2>Showtimes for <strong>@movie?.Title</strong></h2>
+<h2>Select Showtime for @movie.Title</h2>
 
-    <!-- Filter form -->
-    <form asp-action="OrderTicket" asp-route-id="@movie?.ID" method="get" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Theater name or location" value="@search" />
-        </div>
-        <div class="col-md-3">
-            <input type="date" name="date" class="form-control" value="@date" />
-        </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-primary w-100">Filter</button>
-        </div>
-        <div class="col-md-2">
-            <a asp-action="OrderTicket" asp-route-id="@movie?.ID" class="btn btn-secondary w-100">Clear</a>
-        </div>
-    </form>
+<hr />
 
-    @if (!Model.Any())
-    {
-        <p>No showtimes available with the given criteria.</p>
-    }
-    else
-    {
-        <div class="list-group">
-            @foreach (var show in Model)
-            {
-                <div class="list-group-item">
-                    <div class="d-flex justify-content-between flex-wrap">
-                        <div>
-                            <strong>Theater:</strong> @show.Auditorium?.Theater?.Name<br />
-                            <strong>Location:</strong> @show.Auditorium?.Theater?.Location<br />
-                            <strong>Auditorium:</strong> @show.Auditorium?.Name<br />
-                            <strong>Start Time:</strong> @show.StartTime.ToString("f")<br />
-                            <strong>3D:</strong> @(show.Is3D ? "Yes" : "No")<br />
-                            <strong>Duration:</strong> @show.DurationMinutes mins<br />
-                            @if (show.SubtitleLanguage != null)
-                            {
-                                <strong>Subtitles:</strong> @show.SubtitleLanguage.Name
-                            }
-                        </div>
-                        <div class="mt-3 mt-md-0">
-                            <a asp-action="OrderTicketDetails" asp-route-id="@show.ID" class="btn btn-success">
-                                <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            }
-        </div>
-    }
+<!-- ✅ Always show all dates -->
+<div class="mb-3">
+    <h5>Select a Date:</h5>
+    <div class="btn-group" role="group">
+        @foreach (var availableDate in availableDates)
+        {
+            <a href="@Url.Action("OrderTicket", new { id = movie.ID, date = availableDate.ToString("yyyy-MM-dd") })"
+               class="btn btn-sm @(availableDate.ToString("yyyy-MM-dd") == date ? "btn-primary" : "btn-outline-primary")">
+                @availableDate.ToString("dddd, MMM dd")
+            </a>
+        }
+    </div>
 </div>
+
+
+
+@if (!theaters.Any())
+{
+    <div class="alert alert-warning">
+        No theaters found for the selected date.
+    </div>
+}
+
+<!-- ✅ Showtimes grouped by theater -->
+@foreach (var theater in theaters)
+{
+    var showtimes = Model
+        .Where(s => s.StartTime.Date == selectedDate && s.Auditorium.Theater.ID == theater.ID)
+        .OrderBy(s => s.StartTime)
+        .ToList();
+
+    if (showtimes.Any())
+    {
+        <div class="mb-4">
+            <h5>@theater.Name - @theater.Location</h5>
+            <div class="btn-group" role="group">
+                @foreach (var showtime in showtimes)
+                {
+                    <a href="@Url.Action("OrderTicketDetails", new { id = showtime.ID })"
+                       class="btn btn-sm btn-outline-success">
+                        @showtime.StartTime.ToString("hh:mm tt")
+                    </a>
+                }
+            </div>
+        </div>
+    }
+}

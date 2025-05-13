@@ -117,40 +117,29 @@ namespace DKMovies.Controllers
         }
 
         // GET: MoviesList/OrderTicket/5
-        public IActionResult OrderTicket(int id, string search, string date)
+        public IActionResult OrderTicket(int id, string search, string date, int? theaterId)
         {
             var movie = _context.Movies.Find(id);
             if (movie == null) return NotFound();
 
-            Console.WriteLine($"Movie: {movie?.Title} (ID: {movie?.ID})");
-
             var now = DateTime.Now;
 
-            var showtimesQuery = _context.ShowTimes
+            var allShowtimes = _context.ShowTimes
                 .Include(s => s.Auditorium)
                     .ThenInclude(a => a.Theater)
-                .Where(s => s.MovieID == id && s.StartTime >= now);  // ✅ filter out past showtimes
+                .Where(s => s.MovieID == id && s.StartTime >= now)
+                .ToList();
 
-            if (!string.IsNullOrEmpty(search))
-            {
-                showtimesQuery = showtimesQuery.Where(s =>
-                    s.Auditorium.Theater.Name.Contains(search) ||
-                    s.Auditorium.Theater.Location.Contains(search));
-            }
-
-            if (!string.IsNullOrEmpty(date) && DateTime.TryParse(date, out var parsedDate))
-            {
-                showtimesQuery = showtimesQuery.Where(s => s.StartTime.Date == parsedDate.Date);
-            }
-
-            var showtimes = showtimesQuery.ToList();
-
+            // No filters should affect what's passed to the view
             ViewData["Movie"] = movie;
             ViewData["Search"] = search;
             ViewData["Date"] = date;
+            ViewData["SelectedTheaterId"] = theaterId;
 
-            return View(showtimes);
+            return View(allShowtimes);
         }
+
+
 
         // GET: MoviesList/OrderTicketDetails/5 (id = ShowTimeID)
         public IActionResult OrderTicketDetails(int id)
@@ -177,7 +166,8 @@ namespace DKMovies.Controllers
 
             // Get all the seat IDs that are already taken for this showtime
             var takenSeats = _context.TicketSeats
-                .Where(ts => ts.Ticket.ShowTimeID == id)
+                .Include(ts => ts.Ticket)
+                .Where(ts => ts.Ticket != null && ts.Ticket.ShowTimeID == id)
                 .Select(ts => ts.SeatID)
                 .ToList();
 
@@ -187,10 +177,21 @@ namespace DKMovies.Controllers
             return View(seats);
         }
 
-        [HttpPost]
         public IActionResult ConfirmOrder(int ShowTimeID, List<int> SelectedSeats)
         {
-            // Validate if ShowTime exists
+            // ✅ Session Check
+            var role = HttpContext.Session.GetString("Role");
+            var userIdStr = HttpContext.Session.GetString("UserID");
+
+            if (string.IsNullOrEmpty(role) || role != "User" || string.IsNullOrEmpty(userIdStr))
+            {
+                TempData["Error"] = "Only logged-in users can book tickets.";
+                return RedirectToAction("Login", "Account");
+            }
+
+            int userId = int.Parse(userIdStr);
+
+            // ✅ Validate ShowTime
             var showTime = _context.ShowTimes
                 .Include(st => st.Tickets)
                 .ThenInclude(t => t.TicketSeats)
@@ -201,12 +202,11 @@ namespace DKMovies.Controllers
                 return NotFound("ShowTime not found.");
             }
 
-            // Get all seats linked to the showtime
+            // ✅ Check available seats
             var availableSeats = _context.Seats
                 .Where(s => SelectedSeats.Contains(s.ID))
                 .ToList();
 
-            // Validate if any seat is already booked (double booking prevention)
             var takenSeatIds = showTime.Tickets
                 .SelectMany(t => t.TicketSeats)
                 .Select(ts => ts.SeatID)
@@ -219,20 +219,19 @@ namespace DKMovies.Controllers
                 return RedirectToAction("OrderTicketDetails", new { id = ShowTimeID });
             }
 
-            // 🔥 Create Ticket
-            var userId = 1; // <-- Replace with your logged-in user ID
+            // ✅ Create Ticket
             var ticket = new Ticket
             {
                 UserID = userId,
                 ShowTimeID = ShowTimeID,
                 PurchaseTime = DateTime.Now,
-                TotalPrice = availableSeats.Count * 10, // Example price, adjust accordingly
+                TotalPrice = availableSeats.Count * 10 // Adjust price logic if needed
             };
 
             _context.Tickets.Add(ticket);
-            _context.SaveChanges(); // Save to get Ticket ID
+            _context.SaveChanges(); // To get Ticket ID
 
-            // 🔥 Create TicketSeats
+            // ✅ Create TicketSeats
             var ticketSeats = availableSeats.Select(seat => new TicketSeat
             {
                 TicketID = ticket.ID,
@@ -242,10 +241,10 @@ namespace DKMovies.Controllers
             _context.TicketSeats.AddRange(ticketSeats);
             _context.SaveChanges();
 
-            // 🔄 Redirect to confirmation page
             TempData["Success"] = "Seats reserved successfully!";
             return RedirectToAction("OrderConfirmation", new { ticketId = ticket.ID });
         }
+
 
         public IActionResult OrderConfirmation(int ticketId)
         {

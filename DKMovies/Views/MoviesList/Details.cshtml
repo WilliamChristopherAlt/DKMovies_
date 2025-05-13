@@ -1,128 +1,161 @@
 ﻿@model DKMovies.Models.Movie
 @{
     ViewData["Title"] = "Movie Details";
-    var imagePath = string.IsNullOrWhiteSpace(Model.PosterImagePath)
+
+    // Wallpaper and Poster paths
+    var wallpaperPath = string.IsNullOrWhiteSpace(Model.WallpaperImagePath)
+        ? Url.Content("~/images/movie_wallpapers/default.jpg")
+        : Url.Content($"~/images/movie_wallpapers/{Model.WallpaperImagePath}");
+
+    var posterPath = string.IsNullOrWhiteSpace(Model.PosterImagePath)
         ? Url.Content("~/images/movie_posters/default.jpg")
         : Url.Content($"~/images/movie_posters/{Model.PosterImagePath}");
-    var averageRating = ViewData["AverageRating"] as double?;
-    var ratingPercentage = (averageRating ?? 0) * 20; // Convert average to percentage (out of 100)
+
+    var averageRating = ViewData["AverageRating"] as double? ?? 0;
 }
 
-<!-- Ensure Bootstrap Icons are loaded -->
+<!-- Load Bootstrap Icons -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
 
-<div class="container mt-5">
-    <div class="row">
-        <!-- Left: Poster -->
-        <div class="col-md-3 mb-4">
-            <div class="shadow rounded overflow-hidden position-relative" style="padding-bottom: 150%;">
-                <img src="@imagePath" alt="@Model.Title" class="position-absolute w-100 h-100" style="object-fit: cover;">
+<style>
+    .movie-background {
+        background-image: url('@wallpaperPath');
+        background-size: cover;
+        background-position: center;
+        position: relative;
+        color: white;
+    }
+
+        .movie-background::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65); /* dark overlay */
+            z-index: 0;
+        }
+
+    .movie-content {
+        position: relative;
+        z-index: 1;
+        padding-top: 3rem;
+        padding-bottom: 3rem;
+    }
+</style>
+
+<div class="movie-background">
+    <div class="container movie-content">
+        <div class="row align-items-start">
+            <!-- Left: Poster -->
+            <div class="col-md-3 mb-4">
+                <div class="shadow rounded overflow-hidden position-relative" style="padding-bottom: 150%;">
+                    <img src="@posterPath" alt="@Model.Title" class="position-absolute w-100 h-100" style="object-fit: cover;">
+                </div>
             </div>
-        </div>
 
-        <!-- Center: Info -->
-        <div class="col-md-6">
-            <h2 class="mb-3">@Model.Title</h2>
-            <p class="text-muted">@Model.Description</p>
+            <!-- Center: Info -->
+            <div class="col-md-6">
+                <h2 class="mb-3">@Model.Title</h2>
+                <p class="text-light">@Model.Description</p>
 
-            <div class="mb-2"><strong>Duration:</strong> @Model.DurationMinutes minutes</div>
-            <div class="mb-2"><strong>Rating:</strong> @Model.Rating?.Value</div>
-            <div class="mb-2"><strong>Release Date:</strong> @(Model.ReleaseDate?.ToString("d") ?? "N/A")</div>
-            <div class="mb-2"><strong>Language:</strong> @Model.Language?.Name</div>
-            <div class="mb-2"><strong>Country:</strong> @Model.Country?.Name</div>
-            <div class="mb-2">
-                <strong>Director:</strong>
-                @if (Model.Director != null)
+                <div class="mb-2"><strong>Duration:</strong> @Model.DurationMinutes minutes</div>
+                <div class="mb-2"><strong>Rating:</strong> @Model.Rating?.Value</div>
+                <div class="mb-2"><strong>Release Date:</strong> @(Model.ReleaseDate?.ToString("d") ?? "N/A")</div>
+                <div class="mb-2"><strong>Language:</strong> @Model.Language?.Name</div>
+                <div class="mb-2"><strong>Country:</strong> @Model.Country?.Name</div>
+                <div class="mb-2">
+                    <strong>Director:</strong>
+                    @if (Model.Director != null)
+                    {
+                        <a asp-controller="DirectorsList" asp-action="Details" asp-route-id="@Model.Director.ID" class="text-light text-decoration-underline">
+                            @Model.Director.FullName
+                        </a>
+                    }
+                    else
+                    {
+                        <span>N/A</span>
+                    }
+                </div>
+
+                <div class="mb-2">
+                    <strong>Genres:</strong>
+                    @foreach (var genre in Model.MovieGenres.Select(mg => mg.Genre.Name))
+                    {
+                        <span class="badge bg-light text-dark me-1">@genre</span>
+                    }
+                </div>
+
+                <!-- Average Rating -->
+                <div class="mb-3">
+                    <strong>Average Rating:</strong>
+                    <div class="d-flex align-items-center">
+                        <div class="me-2">
+                            @{
+                                int fullStars = (int)Math.Floor(averageRating);
+                                bool hasHalfStar = (averageRating - fullStars) >= 0.25 && (averageRating - fullStars) < 0.75;
+                                int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+                            }
+
+                            @for (int i = 0; i < fullStars; i++)
+                            {
+                                <i class="bi bi-star-fill text-warning"></i>
+                            }
+                            @if (hasHalfStar)
+                            {
+                                <i class="bi bi-star-half text-warning"></i>
+                            }
+                            @for (int i = 0; i < emptyStars; i++)
+                            {
+                                <i class="bi bi-star text-warning"></i>
+                            }
+                        </div>
+                        <span>@averageRating.ToString("F1") / 5</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Actions -->
+            <div class="col-md-3 d-flex flex-column justify-content-center align-items-start">
+                <a asp-action="Index" class="btn btn-link text-light mb-2 text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+
+                @{
+                    var role = Context.Session.GetString("Role");
+                }
+
+                @if (role == "Admin")
                 {
-                    <a asp-controller="DirectorsList" asp-action="Details" asp-route-id="@Model.Director.ID" class="text-decoration-none">
-                        @Model.Director.FullName
+                    <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-link text-light mb-2 text-decoration-none">
+                        <i class="bi bi-pencil me-1"></i> Edit
+                    </a>
+                }
+                else if (role == "User")
+                {
+                    <button class="btn btn-link text-light mb-2 text-decoration-none">
+                        <i class="bi bi-bookmark me-1"></i> Watchlist
+                    </button>
+                    <button class="btn btn-link text-light mb-2 text-decoration-none">
+                        <i class="bi bi-star me-1"></i> Rate
+                    </button>
+                    <a asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-light text-decoration-none">
+                        <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
                     </a>
                 }
                 else
                 {
-                    <span>N/A</span>
+                    <button class="btn btn-link text-secondary text-decoration-none" disabled>
+                        <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
+                    </button>
+                    <small class="text-danger d-block ms-1">Please log in as a user to order tickets.</small>
                 }
             </div>
-
-            <div class="mb-2">
-                <strong>Genres:</strong>
-                @foreach (var genre in Model.MovieGenres.Select(mg => mg.Genre.Name))
-                {
-                    <span class="badge bg-secondary me-1">@genre</span>
-                }
-            </div>
-
-            <!-- Average Rating -->
-            <div class="mb-3">
-                <strong>Average Rating:</strong>
-                <div class="d-flex align-items-center">
-                    <div class="me-2">
-                        @{
-                            double avg = averageRating ?? 0;
-                            int fullStars = (int)Math.Floor(avg);
-                            bool hasHalfStar = (avg - fullStars) >= 0.25 && (avg - fullStars) < 0.75;
-                            int emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-                        }
-
-                        @for (int i = 0; i < fullStars; i++)
-                        {
-                            <i class="bi bi-star-fill text-warning"></i>
-                        }
-                        @if (hasHalfStar)
-                        {
-                            <i class="bi bi-star-half text-warning"></i>
-                        }
-                        @for (int i = 0; i < emptyStars; i++)
-                        {
-                            <i class="bi bi-star text-warning"></i>
-                        }
-                    </div>
-                    <span>@(avg.ToString("F1")) / 5</span>
-                </div>
-            </div>
-
-
         </div>
-
-        <!-- Right: Actions (Vertically centered & conditional) -->
-        <div class="col-md-3 d-flex flex-column justify-content-center align-items-start" style="height: 100%;">
-
-            <a asp-action="Index" class="btn btn-link text-dark mb-2 text-decoration-none">
-                <i class="bi bi-arrow-left me-1"></i> Back
-            </a>
-
-            @{
-                var role = Context.Session.GetString("Role");
-            }
-
-            @if (role == "Admin")
-            {
-                <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-link text-dark mb-2 text-decoration-none">
-                    <i class="bi bi-pencil me-1"></i> Edit
-                </a>
-            }
-            else if (role == "User")
-            {
-                <button class="btn btn-link text-dark mb-2 text-decoration-none">
-                    <i class="bi bi-bookmark me-1"></i> Watchlist
-                </button>
-                <button class="btn btn-link text-dark mb-2 text-decoration-none">
-                    <i class="bi bi-star me-1"></i> Rate
-                </button>
-                @* <a asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-dark text-decoration-none"> *@
-                @*     <i class="bi bi-ticket-perforated me-1"></i> Order Ticket *@
-                @* </a> *@
-            }
-            <a asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-dark text-decoration-none">
-                <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
-            </a>
-            <!-- No buttons shown for other roles -->
-        </div>
-
     </div>
+</div>
 
-    <!-- Reviews Section -->
-    <h3 class="mt-5">Reviews</h3>
+<!-- Reviews Section -->
+<div class="container mt-5">
+    <h3 class="text-dark">Reviews</h3>
     <div class="list-group">
         @if (Model.Reviews != null && Model.Reviews.Any())
         {
@@ -130,38 +163,36 @@
             {
                 <div class="list-group-item">
                     <div class="d-flex justify-content-between">
-                        <!-- Display User Profile Image and Username -->
+                        <!-- User Info -->
                         <div class="d-flex align-items-center">
-                            @if (review.User != null && !string.IsNullOrWhiteSpace(review.User.ProfileImagePath))
+                            @if (!string.IsNullOrWhiteSpace(review.User?.ProfileImagePath))
                             {
-                                <img src="~/images/users/@review.User.ProfileImagePath" alt="@review.User.Username's Profile" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover; margin-right: 8px;" />
+                                <img src="~/images/users/@review.User.ProfileImagePath"
+                                     alt="@review.User.Username's Profile"
+                                     class="rounded-circle me-2"
+                                     style="width: 40px; height: 40px; object-fit: cover;" />
                             }
-                            <span class="fw-bold">
-                                @(review.User != null && !string.IsNullOrWhiteSpace(review.User.Username)
-                                    ? review.User.Username
-                                    : "Anonymous")
-                            </span>
-
+                            <span class="fw-bold">@review.User?.Username ?? "Anonymous"</span>
                         </div>
-                        <!-- Display Review CreatedAt (instead of Release Date) -->
-                        <div class="mb-2"><strong>Created At:</strong> @review.CreatedAt.ToString("d")</div>
+                        <div class="text-muted small">
+                            @review.CreatedAt.ToString("d")
+                        </div>
                     </div>
                     <div class="d-flex align-items-center">
-                        <!-- Star rating display -->
                         <div class="me-2">
                             @for (int i = 0; i < 5; i++)
                             {
                                 <i class="bi @(i < review.Rating ? "bi-star-fill" : "bi-star") text-warning"></i>
                             }
                         </div>
-                        <p>@review.Comment</p>
+                        <p class="mb-0">@review.Comment</p>
                     </div>
                 </div>
             }
         }
         else
         {
-            <p>No reviews available.</p>
+            <p class="text-muted">No reviews available.</p>
         }
     </div>
 </div>

@@ -139,5 +139,13 @@ namespace DKMovies.Controllers
             ModelState.AddModelError(string.Empty, "Invalid admin username or password.");
             return View();
         }
+
+        // GET: Logout (Clears session and redirects to home or login)
+        [HttpGet]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear(); // Remove all session data
+            return RedirectToAction("Login", "Account"); // Or redirect to "Index", "Home" if preferred
+        }
     }
 }
