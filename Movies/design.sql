@@ -129,9 +129,10 @@ CREATE TABLE Tickets (
 -- TICKET_SEATS
 CREATE TABLE TicketSeats (
     ID INT IDENTITY PRIMARY KEY,
+    TicketID INT NOT NULL,
     SeatID INT NOT NULL,
     FOREIGN KEY (TicketID) REFERENCES Tickets(ID) ON DELETE CASCADE,
-    FOREIGN KEY (SeatID) REFERENCES Seats(ID) ON DELETE CASCADE
+    FOREIGN KEY (SeatID) REFERENCES Seats(ID)
 );
 
 -- PAYMENT METHODS
@@ -244,6 +245,52 @@ CREATE TABLE Admins (
 );
 
 GO
+
+CREATE PROCEDURE sp_DeleteTheaterAndDependencies
+    @TheaterID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Delete ShowTimes linked to the auditoriums of the theater
+    DELETE FROM ShowTimes
+    WHERE AuditoriumID IN (SELECT ID FROM Auditoriums WHERE TheaterID = @TheaterID);
+
+    -- Delete TicketSeats linked to the seats in those auditoriums
+    DELETE FROM TicketSeats
+    WHERE SeatID IN (
+        SELECT ID 
+        FROM Seats 
+        WHERE AuditoriumID IN (SELECT ID FROM Auditoriums WHERE TheaterID = @TheaterID)
+    );
+
+    -- Delete the seats
+    DELETE FROM Seats
+    WHERE AuditoriumID IN (SELECT ID FROM Auditoriums WHERE TheaterID = @TheaterID);
+
+    -- Finally, delete the auditoriums
+    DELETE FROM Auditoriums WHERE TheaterID = @TheaterID;
+
+    -- And the theater itself
+    DELETE FROM Theaters WHERE ID = @TheaterID;
+END;
+GO
+
+
+CREATE PROCEDURE sp_DeleteSeatAndDependencies
+    @SeatID INT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    -- Delete TicketSeats linked to this seat
+    DELETE FROM TicketSeats WHERE SeatID = @SeatID;
+
+    -- Delete the seat itself
+    DELETE FROM Seats WHERE ID = @SeatID;
+END;
+GO
+
 
 -- Create stored procedure to delete Movies and Directors by Country
 CREATE PROCEDURE sp_DeleteCountryMovies
