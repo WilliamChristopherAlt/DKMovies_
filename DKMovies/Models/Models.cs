@@ -304,6 +304,25 @@ namespace DKMovies.Models
         public Genre Genre { get; set; }
     }
 
+    public class MovieUserFavourite
+    {
+        [Key]
+        [Display(Name = "Favourite ID")]
+        public int ID { get; set; }
+
+        [Display(Name = "User")]
+        public int UserID { get; set; }
+
+        [ForeignKey("UserID")]
+        public User User { get; set; }
+
+        [Display(Name = "Movie ID")]
+        public int MovieID { get; set; }
+
+        [ForeignKey("MovieID")]
+        public Movie Movie { get; set; }
+    }
+
     // 12. SHOWTIMES
     public class ShowTime
     {
