@@ -10,7 +10,7 @@
     <a asp-action="Create" class="btn btn-primary">Add New Movie</a>
 </p>
 
-<div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
     @foreach (var movie in Model)
     {
         var imagePath = string.IsNullOrWhiteSpace(movie.PosterImagePath)
@@ -18,26 +18,25 @@
         : Url.Content($"~/images/movie_posters/{movie.PosterImagePath}");
 
         <div class="col">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="ratio ratio-1x1" style="aspect-ratio: 1 / 1.618;">
-                    <a href="/Movies/Details/@movie.ID">
-                        <img src="@imagePath" class="card-img-top" alt="@movie.Title" style="height: 100%; width: 100%; object-fit: cover;">
-                    </a>
-                </div>
+            <div class="card h-100 shadow-sm border-0 d-flex flex-column">
+                <a href="@Url.Action("Details", "Movies", new { id = movie.ID })">
+                    <img src="@imagePath"
+                         class="card-img-top"
+                         alt="@movie.Title"
+                         style="aspect-ratio: 2/3; object-fit: cover;" />
+                </a>
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">@movie.Title</h5>
+                    <h5 class="card-title text-truncate">@movie.Title</h5>
                     <p class="card-text mb-1"><strong>Rating:</strong> @movie.Rating?.Value</p>
                     <p class="card-text mb-1"><strong>Duration:</strong> @movie.DurationMinutes mins</p>
-                    <p class="card-text mb-1">
-                        <strong>Release:</strong> @(movie.ReleaseDate.HasValue ? movie.ReleaseDate.Value.ToShortDateString() : "N/A")
-                    </p>
-
+                    <p class="card-text mb-1"><strong>Release:</strong> @(movie.ReleaseDate?.ToShortDateString() ?? "N/A")</p>
                     <p class="card-text mb-1"><strong>Language:</strong> @movie.Language?.Name</p>
                     <p class="card-text mb-1"><strong>Country:</strong> @movie.Country?.Name</p>
                     <p class="card-text mb-1"><strong>Director:</strong> @movie.Director?.FullName</p>
-                    <p class="card-text mb-2 text-truncate" title="@movie.Description"><strong>Description:</strong> @movie.Description</p>
-
-                    <div class="mt-auto d-flex justify-content-between">
+                    <p class="card-text text-truncate" title="@movie.Description"><strong>Description:</strong> @movie.Description</p>
+                </div>
+                <div class="card-footer bg-transparent border-0">
+                    <div class="btn-group w-100" role="group">
                         <a asp-action="Edit" asp-route-id="@movie.ID" class="btn btn-sm btn-outline-primary">Edit</a>
                         <a asp-action="Details" asp-route-id="@movie.ID" class="btn btn-sm btn-outline-secondary">Details</a>
                         <a asp-action="Delete" asp-route-id="@movie.ID" class="btn btn-sm btn-outline-danger">Delete</a>
