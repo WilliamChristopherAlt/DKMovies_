@@ -357,6 +357,8 @@ namespace DKMovies.Models
         [Display(Name = "3D")]
         public bool Is3D { get; set; }
 
+        public decimal Price { get; set; }
+
         public ICollection<Ticket> Tickets { get; set; }
     }
 
@@ -382,11 +384,16 @@ namespace DKMovies.Models
         [Display(Name = "Purchase Time")]
         public DateTime PurchaseTime { get; set; }
 
-        [Display(Name = "Total Price")]
-        public decimal TotalPrice { get; set; }
+        [MaxLength(20)]
+        [Display(Name = "Status")]
+        public string? Status { get; set; }
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
         public ICollection<TicketSeat> TicketSeats { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Total Price")]
+        public decimal TotalPrice => (TicketSeats?.Count ?? 0) * (ShowTime?.Price ?? 0);
     }
 
     public class TicketSeat

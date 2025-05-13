@@ -7,6 +7,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 namespace DKMovies.Controllers
 {
@@ -36,41 +39,63 @@ namespace DKMovies.Controllers
             return View();
         }
 
-        // POST: Login (Handle user login or admin login)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
         {
             var hashedPassword = HashPassword(password);
 
-            // First, try to find a user in the Users table
+            // Check for normal user
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
-
             if (user != null && user.PasswordHash == hashedPassword)
             {
-                HttpContext.Session.SetString("Username", user.Username);
-                HttpContext.Session.SetString("UserID", user.ID.ToString());
-                HttpContext.Session.SetString("Role", "User");
+                var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
+            new Claim(ClaimTypes.Role, "User")
+        };
+
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync("MyCookieAuth", principal,
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = true, // persist after browser/app restart
+                        ExpiresUtc = DateTime.UtcNow.AddDays(30)
+                    });
+
                 return RedirectToAction("Index", "Home");
             }
 
-            // If not found in Users, try to find an admin
+            // Check for admin
             var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
-
             if (admin != null && admin.PasswordHash == hashedPassword)
             {
-                HttpContext.Session.SetString("Username", admin.Username);
-                HttpContext.Session.SetString("UserID", admin.ID.ToString());
-                HttpContext.Session.SetString("Role", "Admin");
-                return RedirectToAction("Home", "Index");
-            }
-            Console.WriteLine("Cant log in");
+                var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, admin.Username),
+            new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
+            new Claim(ClaimTypes.Role, "Admin")
+        };
 
-            // If neither match
+                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var principal = new ClaimsPrincipal(identity);
+
+                await HttpContext.SignInAsync("MyCookieAuth", principal,
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                        ExpiresUtc = DateTime.UtcNow.AddDays(30)
+                    });
+
+                return RedirectToAction("AdminDashboard", "Admin");
+            }
+
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View();
         }
-
 
         // Sign Up view for normal users (GET)
         [HttpGet]
@@ -140,12 +165,12 @@ namespace DKMovies.Controllers
             return View();
         }
 
-        // GET: Logout (Clears session and redirects to home or login)
-        [HttpGet]
-        public IActionResult Logout()
+
+        public async Task<IActionResult> Logout()
         {
-            HttpContext.Session.Clear(); // Remove all session data
-            return RedirectToAction("Login", "Account"); // Or redirect to "Index", "Home" if preferred
+            await HttpContext.SignOutAsync("MyCookieAuth");
+            return RedirectToAction("Login", "Account");
         }
+
     }
 }

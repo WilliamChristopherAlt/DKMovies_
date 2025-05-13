@@ -11,16 +11,13 @@
         <li><strong>Show Time:</strong> @Model.ShowTime.StartTime.ToString("f")</li>
         <li>
             <strong>Seats:</strong>
-            @foreach (var seat in Model.TicketSeats)
-            {
-                @seat.Seat.RowLabel
-
-                @seat.Seat.SeatNumber
-            }
+            @string.Join(", ", Model.TicketSeats.Select(ts => ts.Seat.RowLabel + ts.Seat.SeatNumber))
         </li>
+
         <li><strong>Total Price:</strong> $@Model.TotalPrice</li>
     </ul>
 
     <a class="btn btn-primary mt-3" href="/Home/Index">Return to Home</a>
 </div>
+    
     
