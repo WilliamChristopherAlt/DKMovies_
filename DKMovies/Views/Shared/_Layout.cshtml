@@ -21,7 +21,7 @@
             <div class="container-fluid">
 
                 <!-- Left: Brand -->
-                <a class="navbar-brand fs-3 fw-bold text-primary" asp-area="" asp-controller="MoviesList" asp-action="Index">DKMovies</a>
+                <a class="navbar-brand fs-3 fw-bold text-primary" asp-area="" asp-controller="Home" asp-action="Index">DKMovies</a>
 
                 <!-- Toggle (mobile) -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent"
@@ -58,10 +58,12 @@
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">User Info</a></li>
                                     <li><a class="dropdown-item" asp-controller="Movies" asp-action="Favorites">Favorite Movies</a></li>
                                     <li><a class="dropdown-item" asp-controller="Transactions" asp-action="History">Transaction History</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
                                 }
                                 else if (role == "Admin")
                                 {
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">User Info</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
                                 }
                             </ul>
                         </li>

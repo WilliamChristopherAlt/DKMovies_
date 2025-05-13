@@ -20,7 +20,9 @@
         <div class="col">
             <div class="card h-100 shadow-sm border-0">
                 <div class="ratio ratio-1x1" style="aspect-ratio: 1 / 1.618;">
-                    <img src="@imagePath" class="card-img-top" alt="@movie.Title" style="height: 100%; width: 100%; object-fit: cover;">
+                    <a href="/Movies/Details/@movie.ID">
+                        <img src="@imagePath" class="card-img-top" alt="@movie.Title" style="height: 100%; width: 100%; object-fit: cover;">
+                    </a>
                 </div>
                 <div class="card-body d-flex flex-column">
                     <h5 class="card-title">@movie.Title</h5>

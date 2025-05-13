@@ -62,7 +62,7 @@ namespace DKMovies.Controllers
                 HttpContext.Session.SetString("Username", admin.Username);
                 HttpContext.Session.SetString("UserID", admin.ID.ToString());
                 HttpContext.Session.SetString("Role", "Admin");
-                return RedirectToAction("Home", "Index");
+                return RedirectToAction("AdminDashboard", "Admins");
             }
             Console.WriteLine("Cant log in");
 
@@ -145,7 +145,7 @@ namespace DKMovies.Controllers
         public IActionResult Logout()
         {
             HttpContext.Session.Clear(); // Remove all session data
-            return RedirectToAction("Login", "Account"); // Or redirect to "Index", "Home" if preferred
+            return RedirectToAction("Login", "Account"); 
         }
     }
 }

@@ -1,22 +1,8 @@
-﻿@using Microsoft.AspNetCore.Html
-@model List<DKMovies.Models.Seat>
-
+﻿@model List<DKMovies.Models.Seat>
 @{
     var showTime = ViewData["ShowTime"] as DKMovies.Models.ShowTime;
     var takenSeats = ViewData["TakenSeats"] as List<int> ?? new List<int>();
 }
-
-<style>
-    .btn-taken {
-        background-color: #6c757d !important; /* same as Bootstrap's btn-secondary */
-        color: white !important;
-        pointer-events: none; /* prevent click */
-        opacity: 1 !important; /* avoid washed out look */
-        border-color: #6c757d !important;
-        cursor: not-allowed;
-    }
-</style>
-
 
 @if (Model == null || !Model.Any())
 {
@@ -27,10 +13,12 @@ else
     <div class="container mt-4">
         <h2>Select Seats for @showTime.Movie.Title at @showTime.StartTime.ToString("f")</h2>
 
-        <form asp-action="ConfirmOrder" method="post" id="seatSelectionForm">
+        <form asp-action="ConfirmOrder" method="post">
             <input type="hidden" name="ShowTimeID" value="@showTime.ID" />
 
-            <div class="d-flex gap-4 flex-wrap">
+            <div class="d-flex gap-4">
+
+                <!-- Loop through sections (1-6, 7-12, 13-18) -->
                 @for (int section = 0; section < 3; section++)
                 {
                     int minSeat = section * 6 + 1;
@@ -46,21 +34,20 @@ else
                                 @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber))
                                 {
                                     var isTaken = takenSeats.Contains(seat.ID);
-                                    var seatId = $"seat-{seat.ID}";
                                     <div>
                                         <input type="checkbox"
-                                               id="@seatId"
-                                               name="SelectedSeats[]"
+                                               id="seat-@seat.ID"
+                                               name="SelectedSeats"
                                                value="@seat.ID"
-                                               class="seat-checkbox d-none"
+                                               hidden
                                         @(isTaken ? "disabled" : "") />
 
-                                        <label for="@seatId"
-                                               class="btn btn-sm seat-label @(isTaken ? "btn-taken" : "btn-outline-success")"
-                                               style="min-width: 50px;">
+                                        <label for="seat-@seat.ID"
+                                               class="btn btn-sm @(isTaken ? "btn-secondary disabled unclickable" : "btn-outline-success")"
+                                               style="min-width: 50px;"
+                                               onclick="@(isTaken ? "return false;" : "toggleSeatSelection(this)")">
                                             @seat.RowLabel@seat.SeatNumber
                                         </label>
-
                                     </div>
                                 }
                             </div>
@@ -69,67 +56,37 @@ else
                 }
             </div>
 
-            <div class="mt-3">
-                <strong>Selected seats:</strong>
-                <span id="selectedSeatsCount">0</span>
-            </div>
-
-            <button type="submit" class="btn btn-success mt-3">Proceed to Payment</button>
+            <button type="submit" class="btn btn-success mt-3" onclick="this.innerText='Processing...';">Proceed to Payment</button>
         </form>
     </div>
 }
 
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger mt-3">
+    <div class="alert alert-danger">
         @TempData["Error"]
     </div>
 }
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success mt-3">
+    <div class="alert alert-success">
         @TempData["Success"]
     </div>
 }
-@section Scripts {
-    <script>
-        function updateSeatVisuals() {
-            const checkboxes = document.querySelectorAll('input[name="SelectedSeats[]"]');
-            checkboxes.forEach(cb => {
-                const label = document.querySelector(`label[for="${cb.id}"]`);
-                if (!label) return;
-                if (cb.checked) {
-                    label.classList.remove("btn-outline-success");
-                    label.classList.add("btn-success");
-                } else {
-                    label.classList.add("btn-outline-success");
-                    label.classList.remove("btn-success");
-                }
-            });
 
-            // Update selected count
-            const selectedSeats = document.querySelectorAll('input[name="SelectedSeats[]"]:checked');
-            document.getElementById('selectedSeatsCount').textContent = selectedSeats.length;
+
+<script>
+    function toggleSeatSelection(label) {
+        if (label.classList.contains("btn-outline-success")) {
+            label.classList.remove("btn-outline-success");
+            label.classList.add("btn-success");
+        } else {
+            label.classList.add("btn-outline-success");
+            label.classList.remove("btn-success");
         }
 
-        document.addEventListener('DOMContentLoaded', function () {
-            // Initial update
-            updateSeatVisuals();
-
-            // Update visuals on change
-            document.querySelectorAll('input[name="SelectedSeats[]"]').forEach(cb => {
-                cb.addEventListener('change', updateSeatVisuals);
-            });
-
-            // Prevent submit with no seats
-            const form = document.getElementById('seatSelectionForm');
-            form.addEventListener('submit', function (e) {
-                const selected = document.querySelectorAll('input[name="SelectedSeats[]"]:checked');
-                if (selected.length === 0) {
-                    e.preventDefault();
-                    alert("Please select at least one seat before proceeding.");
-                }
-            });
-        });
-    </script>
-}
+        // Synchronize the hidden checkbox with the button click
+        const checkbox = document.getElementById(label.htmlFor);
+        checkbox.checked = !checkbox.checked;
+    }
+</script>

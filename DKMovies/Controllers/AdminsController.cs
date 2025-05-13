@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using DKMovies.Models;
 using System.Text;
 using System.Security.Cryptography;
+using Microsoft.AspNetCore.Identity;
 
 namespace DKMovies.Controllers
 {
@@ -19,7 +20,56 @@ namespace DKMovies.Controllers
         {
             _context = context;
         }
+        public IActionResult AdminDashboard()
+        {
+            var orderData = _context.Orders
+                .GroupBy(o => o.OrderTime.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    TotalAmount = g.Sum(o => o.TotalAmount)
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
 
+            var ticketData = _context.Tickets
+                .GroupBy(t => t.PurchaseTime.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    TotalPrice = g.Sum(t => t.TotalPrice)
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            // Combine all unique dates from both datasets
+            var dates = orderData.Select(o => o.Date)
+                .Union(ticketData.Select(t => t.Date))
+                .Distinct()
+                .OrderBy(d => d)
+                .Select(d => d.ToString("yyyy-MM-dd"))
+                .ToList();
+
+            // Map totals, ensuring 0 for missing dates
+            var orderTotals = dates.Select(d =>
+                orderData.FirstOrDefault(o => o.Date.ToString("yyyy-MM-dd") == d)?.TotalAmount ?? 0)
+                .ToList();
+
+            var ticketTotals = dates.Select(d =>
+                ticketData.FirstOrDefault(t => t.Date.ToString("yyyy-MM-dd") == d)?.TotalPrice ?? 0)
+                .ToList();
+
+            // Calculate total income (orders + tickets)
+            var totalIncome = orderTotals.Zip(ticketTotals, (o, t) => o + t).ToList();
+
+            ViewBag.TotalUsers = _context.Users.Count();
+            ViewBag.TotalEmployees = _context.Employees.Count();
+            ViewData["Dates"] = dates;
+            ViewData["OrderTotals"] = orderTotals;
+            ViewData["TicketTotals"] = ticketTotals;
+            ViewData["TotalIncome"] = totalIncome;
+            return View();
+        }
         // GET: Admins
         public async Task<IActionResult> Index()
         {

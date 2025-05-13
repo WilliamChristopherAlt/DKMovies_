@@ -21,8 +21,13 @@ namespace DKMovies.Controllers
         // GET: ShowTimes
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.ShowTimes.Include(s => s.Auditorium).Include(s => s.Movie).Include(s => s.SubtitleLanguage);
-            return View(await applicationDbContext.ToListAsync());
+            var showTimes = await _context.ShowTimes
+                .Include(s => s.Auditorium)
+                .Include(s => s.Movie)
+                .Include(s => s.SubtitleLanguage)
+                .ToListAsync();
+            Console.WriteLine($"Retrieved {showTimes.Count} ShowTime records");
+            return View(showTimes);
         }
 
         // GET: ShowTimes/Details/5
@@ -52,6 +57,7 @@ namespace DKMovies.Controllers
             ViewData["AuditoriumID"] = new SelectList(_context.Auditoriums, "ID", "Name");
             ViewData["MovieID"] = new SelectList(_context.Movies, "ID", "Title");
             ViewData["ID"] = new SelectList(_context.Languages, "ID", "Name");
+            ViewData["LanguageID"] = new SelectList(_context.Languages, "ID", "Name");
             return View();
         }
 
@@ -60,7 +66,7 @@ namespace DKMovies.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,MovieID,AuditoriumID,StartTime,DurationMinutes,SubtitleLanguageID,Is3D")] ShowTime showTime)
+        public async Task<IActionResult> Create([Bind("ID,MovieID,AuditoriumID,StartTime,DurationMinutes,SubtitleLanguageID,Is3D")] ShowTime showTime, int? movieId)
         {
             if (ModelState.IsValid)
             {
@@ -68,9 +74,16 @@ namespace DKMovies.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+            var showtime = new ShowTime();
+            if (movieId.HasValue)
+            {
+                showtime.MovieID = movieId.Value;
+            }
             ViewData["AuditoriumID"] = new SelectList(_context.Auditoriums, "ID", "Name", showTime.AuditoriumID);
             ViewData["MovieID"] = new SelectList(_context.Movies, "ID", "Title", showTime.MovieID);
             ViewData["ID"] = new SelectList(_context.Languages, "ID", "Name", showTime.ID);
+            ViewData["LanguageID"] = new SelectList(_context.Languages, "ID", "Name");
+
             return View(showTime);
         }
 

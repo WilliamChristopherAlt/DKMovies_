@@ -293,6 +293,8 @@ GO
 
 
 -- Create stored procedure to delete Movies and Directors by Country
+DROP PROCEDURE IF EXISTS sp_DeleteCountryMovies;
+GO
 CREATE PROCEDURE sp_DeleteCountryMovies
     @CountryID INT
 AS
@@ -303,6 +305,8 @@ END;
 GO
 
 -- Create stored procedure to delete ShowTimes by Language
+DROP PROCEDURE IF EXISTS sp_DeleteLanguage_ShowTimes;
+GO
 CREATE PROCEDURE sp_DeleteLanguage_ShowTimes
     @LanguageID INT
 AS
