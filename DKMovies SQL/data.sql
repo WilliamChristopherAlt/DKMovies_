@@ -433,36 +433,38 @@ BEGIN
     SET @UserID = @UserID + 1;
 END */
 
-
--- SHOWTIMES: Insert 1–5 showtimes per movie for first 49 movies
+-- SHOWTIMES: 
+-- Insert 1–10 showtimes per movie
 SET NOCOUNT ON;
 
-DECLARE @movieID INT = 1
+DECLARE @movieID INT = 1;
 
 WHILE @movieID <= 130
 BEGIN
-    DECLARE @showCount INT = ABS(CHECKSUM(NEWID())) % 10 + 1  -- 1 to 5 showtimes
-    DECLARE @i INT = 1
+    DECLARE @showCount INT = ABS(CHECKSUM(NEWID())) % 10 + 1; -- 1 to 10 showtimes
+    DECLARE @i INT = 1;
 
     WHILE @i <= @showCount
     BEGIN
-        INSERT INTO ShowTimes (MovieID, AuditoriumID, StartTime, DurationMinutes, SubtitleLanguageID, Is3D)
+        INSERT INTO ShowTimes (MovieID, AuditoriumID, StartTime, DurationMinutes, SubtitleLanguageID, Is3D, Price)
         VALUES (
             @movieID,
             ABS(CHECKSUM(NEWID())) % 50 + 1,  -- AuditoriumID 1–50
             DATEADD(HOUR, ABS(CHECKSUM(NEWID())) % 10 + 10, DATEADD(DAY, ABS(CHECKSUM(NEWID())) % 6, '2025-10-10')),
             ABS(CHECKSUM(NEWID())) % 71 + 90, -- Duration: 90–160 mins
             ABS(CHECKSUM(NEWID())) % 4 + 1,   -- SubtitleLanguageID 1–4
-            ABS(CHECKSUM(NEWID())) % 2        -- Is3D: 0 or 1
+            ABS(CHECKSUM(NEWID())) % 2,       -- Is3D: 0 or 1
+            CAST((ABS(CHECKSUM(NEWID())) % 1000) / 100.0 + 5.00 AS DECIMAL(10,2))  -- Price: $5.00–$14.99
         );
 
-        SET @i += 1
+        SET @i += 1;
     END
 
-    SET @movieID += 1
+    SET @movieID += 1;
 END
 
 SET NOCOUNT OFF;
+
 
 
 -- TICKETS
