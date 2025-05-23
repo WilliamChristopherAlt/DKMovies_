@@ -255,7 +255,7 @@ namespace DKMovies.Models
             modelBuilder.Entity<Language>()
                 .HasMany(l => l.ShowTimes)
                 .WithOne(st => st.SubtitleLanguage)
-                .HasForeignKey(st => st.ID)
+                .HasForeignKey(st => st.SubtitleLanguageID)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // 5. Directors

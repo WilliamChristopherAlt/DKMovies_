@@ -46,13 +46,38 @@ namespace DKMovies.Controllers
             return View(showTime);
         }
 
-        // GET: ShowTimes/Create
-        public IActionResult Create()
+        [HttpGet]
+        public async Task<JsonResult> GetAuditoriumsByTheater(int theaterId)
         {
-            ViewData["AuditoriumID"] = new SelectList(_context.Auditoriums, "ID", "Name");
-            ViewData["MovieID"] = new SelectList(_context.Movies, "ID", "Title");
-            ViewData["ID"] = new SelectList(_context.Languages, "ID", "Name");
-            return View();
+            var auditoriums = await _context.Auditoriums
+                .Where(a => a.TheaterID == theaterId)
+                .OrderBy(a => a.Name)
+                .Select(a => new { id = a.ID, name = a.Name })
+                .ToListAsync();
+
+            return Json(auditoriums);
+        }
+        // GET: ShowTimes/Create
+        public async Task<IActionResult> Create(int? movieId)
+        {
+            var showtime = new ShowTime();
+
+            if (movieId.HasValue)
+            {
+                var movie = await _context.Movies.FirstOrDefaultAsync(m => m.ID == movieId.Value);
+                if (movie != null)
+                {
+                    showtime.MovieID = movie.ID;
+                    ViewBag.MovieID = movie.ID;
+                    ViewBag.MovieTitle = movie.Title;
+                    ViewBag.MovieDuration = movie.DurationMinutes;
+                }
+            }
+
+            ViewBag.Theaters = await _context.Theaters.OrderBy(t => t.Name).ToListAsync();
+            ViewData["LanguageID"] = new SelectList(_context.Languages, "ID", "Name");
+
+            return View(showtime);
         }
 
         // POST: ShowTimes/Create
@@ -60,17 +85,98 @@ namespace DKMovies.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,MovieID,AuditoriumID,StartTime,DurationMinutes,SubtitleLanguageID,Is3D")] ShowTime showTime)
+        public async Task<IActionResult> Create([Bind("ID,MovieID,AuditoriumID,StartTime,SubtitleLanguageID,Is3D")] ShowTime showTime, int? TheaterID)
         {
+            // Ensure MovieID is present
+            if (showTime.MovieID == 0) // Or check if it's null, depending on your model
+            {
+                ModelState.AddModelError("MovieID", "The MovieID field is required.");
+            }
+
+            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.ID == showTime.MovieID);
+            if (movie == null && showTime.MovieID != 0) // Add check if movieID was actually provided
+            {
+                ModelState.AddModelError("MovieID", "Selected movie does not exist.");
+            }
+
+            // Ensure AuditoriumID is present
+            if (showTime.AuditoriumID == 0) // Or check if it's null, depending on your model
+            {
+                ModelState.AddModelError("AuditoriumID", "The AuditoriumID field is required.");
+            }
+            else
+            {
+                var auditorium = await _context.Auditoriums.FirstOrDefaultAsync(a => a.ID == showTime.AuditoriumID);
+                if (auditorium == null)
+                {
+                    ModelState.AddModelError("AuditoriumID", "Selected auditorium does not exist.");
+                }
+            }
+
+
+            if (movie != null) // Only proceed with duration and conflict check if movie is valid
+            {
+                showTime.DurationMinutes = movie.DurationMinutes;
+
+                // Conflict check logic
+                var newShowStart = showTime.StartTime;
+                var newShowEnd = showTime.StartTime.AddMinutes(movie.DurationMinutes);
+
+                // Your existing conflict check logic
+                var conflictingShowtimeExists = await _context.ShowTimes
+                    .Where(s => s.AuditoriumID == showTime.AuditoriumID)
+                    .AnyAsync(s =>
+                        newShowStart < s.StartTime.AddMinutes(s.DurationMinutes + 30) &&
+                        newShowEnd.AddMinutes(30) > s.StartTime
+                    );
+
+                if (conflictingShowtimeExists)
+                {
+                    ModelState.AddModelError("", "This showtime conflicts with another showtime in the same auditorium.");
+                }
+            }
+            foreach (var kvp in ModelState)
+            {
+                foreach (var error in kvp.Value.Errors)
+                {
+                    Console.WriteLine($"Key: {kvp.Key}, Error: {error.ErrorMessage}");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(showTime);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["AuditoriumID"] = new SelectList(_context.Auditoriums, "ID", "Name", showTime.AuditoriumID);
-            ViewData["MovieID"] = new SelectList(_context.Movies, "ID", "Title", showTime.MovieID);
-            ViewData["ID"] = new SelectList(_context.Languages, "ID", "Name", showTime.ID);
+
+            // Repopulate ViewBags/Data for view if ModelState is not valid
+            ViewBag.Theaters = await _context.Theaters.OrderBy(t => t.Name).ToListAsync();
+            ViewData["LanguageID"] = new SelectList(_context.Languages, "ID", "Name", showTime.SubtitleLanguageID);
+
+            if (TheaterID.HasValue)
+            {
+                var auditoriums = await _context.Auditoriums
+                    .Where(a => a.TheaterID == TheaterID.Value)
+                    .OrderBy(a => a.Name)
+                    .ToListAsync();
+                ViewData["AuditoriumID"] = new SelectList(auditoriums, "ID", "Name", showTime.AuditoriumID);
+                ViewBag.SelectedTheaterID = TheaterID.Value;
+            }
+            else
+            {
+                ViewData["AuditoriumID"] = new SelectList(Enumerable.Empty<Auditorium>(), "ID", "Name");
+            }
+
+            if (movie != null)
+            {
+                ViewBag.MovieTitle = movie.Title;
+                ViewBag.MovieDuration = movie.DurationMinutes;
+            }
+            // Set MovieID for the hidden input if it's not already on the model from binding
+            ViewBag.MovieID = showTime.MovieID;
+
+
             return View(showTime);
         }
 
