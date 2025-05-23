@@ -63,13 +63,6 @@ INSERT INTO EmployeeRoles (Name, Description) VALUES
 ('Technician', 'Maintains cinema equipment'),
 ('Usher', 'Guides customers to their seats');
 
--- MEASUREMENT UNITS
-INSERT INTO MeasurementUnits (Name, IsContinuous) VALUES
-('Piece', 0),
-('Liter', 1),
-('Kg', 1),
-('Box', 0);
-
 -- USERS
 INSERT INTO Users (Username, Email, PasswordHash, FullName, Phone, BirthDate, Gender, ProfileImagePath) VALUES
 ('john_doe', 'john@example.com', 'pmWkWSBCL51Bfkhn79xPuKBKHz//H6B+mY6G9/eieuM=', 'John Doe', '1111111111', '1990-01-01', 'Male', 'men/0.jpg'),
@@ -392,54 +385,13 @@ INSERT INTO MovieGenres (MovieID, GenreID) VALUES
 (48, 5), (48, 7), (48, 8),
 (49, 3), (49, 6), (49, 9);
 
-/*
--- Randomly insert favorites for each user
--- Let's assume each user has 5-15 favorite movies randomly selected
-
-DECLARE @MinFavorites INT = 5;
-DECLARE @MaxFavorites INT = 15;
-
-DECLARE @UserID INT;
-DECLARE @RandomCount INT;
-DECLARE @MovieID_ INT;
-
--- Loop through each user
-SET @UserID = 1;
-WHILE @UserID <= 10
-BEGIN
-    -- Random number of favorites for this user
-    SET @RandomCount = FLOOR(RAND() * (@MaxFavorites - @MinFavorites + 1)) + @MinFavorites;
-    
-    DECLARE @InsertedMovies TABLE (MovieID INT);
-
-    WHILE @RandomCount > 0
-    BEGIN
-        -- Randomly select a movie ID
-        SET @MovieID_ = FLOOR(RAND() * 130) + 1;
-
-        -- Only insert if not already favorited
-        IF NOT EXISTS (SELECT 1 FROM MovieUserFavourites WHERE UserID = @UserID AND MovieID = @MovieID_)
-        BEGIN
-            INSERT INTO MovieUserFavourites (UserID, MovieID)
-            VALUES (@UserID, @MovieID_);
-
-            -- Track inserted movies to avoid duplicates in this loop
-            INSERT INTO @InsertedMovies (MovieID) VALUES (@MovieID_);
-            
-            SET @RandomCount = @RandomCount - 1;
-        END
-    END
-
-    SET @UserID = @UserID + 1;
-END */
-
 -- SHOWTIMES: 
 -- Insert 1–10 showtimes per movie
 SET NOCOUNT ON;
 
 DECLARE @movieID INT = 1;
 
-WHILE @movieID <= 130
+WHILE @movieID <= 80
 BEGIN
     DECLARE @showCount INT = ABS(CHECKSUM(NEWID())) % 10 + 1; -- 1 to 10 showtimes
     DECLARE @i INT = 1;
@@ -474,33 +426,69 @@ SET NOCOUNT OFF;
 
 
 -- CONCESSIONS
-INSERT INTO Concessions (Name, Description, Price, StockLeft, UnitID, ImagePath) VALUES
-('Large Popcorn', 'Buttered popcorn.', 5.00, 50, 1, '0.jpg'),
-('Soda', 'Chilled drink.', 3.00, 100, 2, '1.jpg'),
-('Nachos', 'Cheese and crispy chips.', 4.00, 30, 1, '2.jpg'),
-('Candy', 'Sweet and delicious candy.', 2.50, 60, 1, '3.jpg');
+INSERT INTO Concessions (Name, Description, ImagePath)
+VALUES
+(N'Popcorn', N'Classic buttered popcorn', N'Popcorn.jpg'),
+(N'Nachos', N'Cheesy nachos with jalapenos', N'Nachos.jpg'),
+(N'Hotdog', N'Grilled hotdog in a bun', N'Hotdog.jpg'),
+(N'Soda', N'Chilled soft drink', N'Soda.jpg'),
+(N'Candy', N'Assorted movie candy', N'Candy.jpg'),
+(N'Ice Cream', N'Vanilla ice cream cup', N'Ice Cream.jpg'),
+(N'Pretzel', N'Salted soft pretzel', N'Pretzel.jpg'),
+(N'Slushie', N'Frozen flavored slushie', N'Slushie.jpg'),
+(N'Chocolate Bar', N'Milk chocolate treat', N'Chocolate Bar.jpg'),
+(N'Water Bottle', N'Bottled mineral water', N'Water Bottle.jpg');
 
--- ORDERS
-INSERT INTO Orders (UserID, TotalAmount, OrderStatus) VALUES
-(1, 8.00, 'Completed'),
-(2, 6.00, 'Completed'),
-(3, 10.00, 'Completed'),
-(4, 7.50, 'Completed');
+GO
 
--- ORDER ITEMS
-INSERT INTO OrderItems (OrderID, ConcessionID, Quantity, PriceAtPurchase) VALUES
-(1, 1, 1, 5.00),
-(1, 2, 1, 3.00),
-(2, 2, 2, 3.00),
-(3, 1, 2, 5.00),
-(4, 3, 1, 4.00);
+-- THEATERCONCESSIONS
+DECLARE @TheaterID INT, @ConcessionID INT, @Price DECIMAL(6,2), @StockLeft INT, @IsAvailable BIT;
 
--- ORDER PAYMENTS
-INSERT INTO OrderPayments (OrderID, MethodID, PaymentStatus, PaidAmount, PaidAt) VALUES
-(1, 1, 'Completed', 8.00, GETDATE()),
-(2, 3, 'Completed', 6.00, GETDATE()),
-(3, 1, 'Completed', 10.00, GETDATE()),
-(4, 2, 'Completed', 7.50, GETDATE());
+SET NOCOUNT ON;
+
+-- Loop over TheaterIDs
+DECLARE @TID INT = 1;
+WHILE @TID <= 10
+BEGIN
+    -- Randomly decide how many concessions this theater has (3 to 8)
+    DECLARE @ConcessionCount INT = ROUND(RAND() * 5 + 3, 0); -- Between 3 and 8
+
+    -- Temporary table to hold selected concession IDs for this theater
+    DECLARE @Selected TABLE (CID INT PRIMARY KEY);
+    
+    WHILE (SELECT COUNT(*) FROM @Selected) < @ConcessionCount
+    BEGIN
+        SET @ConcessionID = ROUND(RAND() * 9 + 1, 0); -- ConcessionID from 1 to 10
+        IF NOT EXISTS (SELECT 1 FROM @Selected WHERE CID = @ConcessionID)
+            INSERT INTO @Selected (CID) VALUES (@ConcessionID);
+    END
+
+    -- Insert for selected concessions
+    DECLARE concession_cursor CURSOR FOR SELECT CID FROM @Selected;
+    OPEN concession_cursor;
+    FETCH NEXT FROM concession_cursor INTO @ConcessionID;
+    
+    WHILE @@FETCH_STATUS = 0
+    BEGIN
+        SET @Price = ROUND(RAND() * 5.5 + 1.5, 2); -- $1.50 to $7.00
+        SET @StockLeft = ROUND(RAND() * 90 + 10, 0); -- 10 to 100
+        SET @IsAvailable = ROUND(RAND(), 0); -- 0 or 1
+
+        INSERT INTO TheaterConcessions (TheaterID, ConcessionID, Price, StockLeft, IsAvailable)
+        VALUES (@TID, @ConcessionID, @Price, @StockLeft, @IsAvailable);
+
+        FETCH NEXT FROM concession_cursor INTO @ConcessionID;
+    END
+
+    CLOSE concession_cursor;
+    DEALLOCATE concession_cursor;
+
+    SET @TID = @TID + 1;
+END;
+
+SET NOCOUNT OFF;
+
+GO
 
 -- REVIEWS
 INSERT INTO Reviews (MovieID, UserID, Rating, Comment, IsApproved) VALUES

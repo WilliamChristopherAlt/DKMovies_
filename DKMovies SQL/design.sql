@@ -188,51 +188,31 @@ CREATE TABLE Employees (
 	ProfileImagePath NVARCHAR(500),
 );
 
--- MEASUREMENT UNITS
-CREATE TABLE MeasurementUnits (
-    ID INT IDENTITY PRIMARY KEY,
-    Name NVARCHAR(50) UNIQUE NOT NULL,
-    IsContinuous BIT NOT NULL
-);
-
 -- CONCESSIONS
 CREATE TABLE Concessions (
     ID INT IDENTITY PRIMARY KEY,
     Name NVARCHAR(100) UNIQUE NOT NULL,
     Description NVARCHAR(255),
-    Price DECIMAL(6, 2) NOT NULL,
-    StockLeft INT NOT NULL CHECK (StockLeft >= 0),
-    UnitID INT FOREIGN KEY REFERENCES MeasurementUnits(ID) ON DELETE CASCADE,
-    IsAvailable BIT DEFAULT 1,
     ImagePath NVARCHAR(500)
 );
 
--- ORDERS
-CREATE TABLE Orders (
+CREATE TABLE TheaterConcessions (
     ID INT IDENTITY PRIMARY KEY,
-    UserID INT FOREIGN KEY REFERENCES Users(ID) ON DELETE CASCADE,
-    OrderTime DATETIME DEFAULT GETDATE(),
-    TotalAmount DECIMAL(10, 2),
-    OrderStatus NVARCHAR(50) CHECK (OrderStatus IN ('Pending', 'Completed', 'Cancelled')) DEFAULT 'Pending'
+    TheaterID INT FOREIGN KEY REFERENCES Theaters(ID) ON DELETE CASCADE,
+    ConcessionID INT FOREIGN KEY REFERENCES Concessions(ID) ON DELETE CASCADE,
+    Price DECIMAL(6, 2) NOT NULL,
+    StockLeft INT NOT NULL CHECK (StockLeft >= 0),
+    IsAvailable BIT DEFAULT 1,
+    CONSTRAINT UQ_Theater_Concession UNIQUE (TheaterID, ConcessionID)
 );
 
 -- ORDER ITEMS
 CREATE TABLE OrderItems (
     ID INT IDENTITY PRIMARY KEY,
-    OrderID INT FOREIGN KEY REFERENCES Orders(ID) ON DELETE CASCADE,
-    ConcessionID INT FOREIGN KEY REFERENCES Concessions(ID) ON DELETE CASCADE,
+    TicketID INT FOREIGN KEY REFERENCES Tickets(ID) ON DELETE CASCADE,
+    TheaterConcessionID INT FOREIGN KEY REFERENCES TheaterConcessions(ID) ON DELETE NO ACTION,
     Quantity INT NOT NULL CHECK (Quantity > 0),
     PriceAtPurchase DECIMAL(6, 2) NOT NULL
-);
-
--- ORDER PAYMENTS
-CREATE TABLE OrderPayments (
-    ID INT IDENTITY PRIMARY KEY,
-    OrderID INT FOREIGN KEY REFERENCES Orders(ID) ON DELETE CASCADE,
-    MethodID INT FOREIGN KEY REFERENCES PaymentMethods(ID) ON DELETE CASCADE,
-    PaymentStatus NVARCHAR(50) CHECK (PaymentStatus IN ('Pending', 'Completed', 'Failed')) NOT NULL,
-    PaidAmount DECIMAL(10, 2),
-    PaidAt DATETIME
 );
 
 -- REVIEWS
@@ -255,6 +235,17 @@ CREATE TABLE Admins (
     PasswordHash NVARCHAR(255) NOT NULL,
     CreatedAt DATETIME DEFAULT GETDATE()
 );
+
+GO
+
+CREATE TRIGGER trg_DeleteOrderItemsOnTheaterConcessionDelete
+ON TheaterConcessions
+AFTER DELETE
+AS
+BEGIN
+    DELETE FROM OrderItems
+    WHERE TheaterConcessionID IN (SELECT ID FROM DELETED);
+END;
 
 GO
 
