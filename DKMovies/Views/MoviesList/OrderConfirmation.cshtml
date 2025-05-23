@@ -1,0 +1,26 @@
+﻿@model DKMovies.Models.Ticket
+
+<div class="container mt-5">
+    <h2>Reservation Successful!</h2>
+    <p>Your ticket has been successfully reserved. Here are your details:</p>
+
+    <ul>
+        <li><strong>Movie:</strong> @Model.ShowTime.Movie.Title</li>
+        <li><strong>Theater:</strong> @Model.ShowTime.Auditorium.Theater.Name</li>
+        <li><strong>Auditorium:</strong> @Model.ShowTime.Auditorium.Name</li>
+        <li><strong>Show Time:</strong> @Model.ShowTime.StartTime.ToString("f")</li>
+        <li>
+            <strong>Seats:</strong>
+            @foreach (var seat in Model.TicketSeats)
+            {
+                @seat.Seat.RowLabel
+
+                @seat.Seat.SeatNumber
+            }
+        </li>
+        <li><strong>Total Price:</strong> $@Model.TotalPrice</li>
+    </ul>
+
+    <a class="btn btn-primary mt-3" href="/Home/Index">Return to Home</a>
+</div>
+    

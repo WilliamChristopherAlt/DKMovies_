@@ -2,9 +2,52 @@
 
 @{
     ViewData["Title"] = "Movies";
+    int.TryParse(ViewContext.HttpContext.Request.Query["languageId"], out int selectedLangId);
 }
 
 <h1 class="mb-4">Movies</h1>
+
+
+
+<form asp-action="Index" method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <input type="text" name="searchTitle" value="@ViewData["CurrentFilter"]" class="form-control" placeholder="Search by title..." />
+    </div>
+
+    <div class="col-md-3">
+        <select name="languageId" class="form-select">
+            <option value="">All Languages</option>
+            @foreach (var lang in ViewBag.Languages as List<DKMovies.Models.Language>)
+            {
+                <option value="@lang.ID" selected="@(lang.ID == selectedLangId)">
+                    @lang.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="sortBy" class="form-select">
+            <option value="">Sort by</option>
+            <option value="title" selected="@(ViewData["CurrentSortBy"]?.ToString() == "title")">Title</option>
+            <option value="release" selected="@(ViewData["CurrentSortBy"]?.ToString() == "release")">Release Date</option>
+            <option value="rating" selected="@(ViewData["CurrentSortBy"]?.ToString() == "rating")">Rating</option>
+            <option value="duration" selected="@(ViewData["CurrentSortBy"]?.ToString() == "duration")">Duration</option>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="sortOrder" class="form-select">
+            <option value="asc" selected="@(ViewData["CurrentSortOrder"]?.ToString() == "asc")">Ascending</option>
+            <option value="desc" selected="@(ViewData["CurrentSortOrder"]?.ToString() == "desc")">Descending</option>
+        </select>
+    </div>
+
+    <div class="col-md-3 d-grid">
+        <button type="submit" class="btn btn-outline-secondary">Apply</button>
+        <a asp-action="Index" class="btn btn-link mt-2">Reset filters</a>
+    </div>
+</form>
 
 <p>
     <a asp-action="Create" class="btn btn-primary">Add New Movie</a>

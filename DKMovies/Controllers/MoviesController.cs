@@ -20,10 +20,44 @@ namespace DKMovies.Controllers
         }
 
         // GET: Movies
-        public async Task<IActionResult> Index()
+        public IActionResult Index(string searchTitle, int? languageId, string sortBy, string sortOrder)
         {
-            var applicationDbContext = _context.Movies.Include(m => m.Country).Include(m => m.Director).Include(m => m.Language).Include(m => m.Rating);
-            return View(await applicationDbContext.ToListAsync());
+            ViewData["CurrentFilter"] = searchTitle;
+            ViewData["CurrentSortBy"] = sortBy;
+            ViewData["CurrentSortOrder"] = sortOrder;
+
+            var movies = _context.Movies
+                .Include(m => m.Language)
+                .Include(m => m.Country)
+                .Include(m => m.Director)
+                .Include(m => m.Rating)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTitle))
+            {
+                movies = movies.Where(m => m.Title.Contains(searchTitle));
+            }
+
+            if (languageId.HasValue)
+            {
+                movies = movies.Where(m => m.LanguageID == languageId.Value);
+            }
+
+            // Default to ascending if not specified
+            bool ascending = sortOrder?.ToLower() != "desc";
+
+            movies = (sortBy?.ToLower()) switch
+            {
+                "title" => ascending ? movies.OrderBy(m => m.Title) : movies.OrderByDescending(m => m.Title),
+                "release" => ascending ? movies.OrderBy(m => m.ReleaseDate) : movies.OrderByDescending(m => m.ReleaseDate),
+                "rating" => ascending ? movies.OrderBy(m => m.Rating.Value) : movies.OrderByDescending(m => m.Rating.Value),
+                "duration" => ascending ? movies.OrderBy(m => m.DurationMinutes) : movies.OrderByDescending(m => m.DurationMinutes),
+                _ => movies.OrderBy(m => m.Title)
+            };
+
+            ViewBag.Languages = _context.Languages.ToList();
+
+            return View(movies.ToList());
         }
 
         // GET: Movies/Details/5
