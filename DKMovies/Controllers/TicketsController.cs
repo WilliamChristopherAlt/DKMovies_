@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DKMovies.Models;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 public class TicketsController : Controller
 {
@@ -163,35 +165,82 @@ public class TicketsController : Controller
         return View(ticket);
     }
 
-
-    public async Task<IActionResult> UserTickets()
+    public async Task<IActionResult> UserTickets(string? search, string? status, string? sort)
     {
-        // Ensure the user is authenticated and in "User" role
         if (!User.Identity.IsAuthenticated || !User.IsInRole("User"))
-        {
             return Forbid("Only logged-in users can view ticket history.");
-        }
 
-        // Retrieve user ID from claims
-        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
             return Unauthorized("Invalid user session.");
+
+        var query = _context.Tickets
+            .Where(t => t.UserID == userId)
+            .Include(t => t.ShowTime).ThenInclude(st => st.Movie)
+            .Include(t => t.ShowTime).ThenInclude(st => st.Auditorium).ThenInclude(a => a.Theater)
+            .Include(t => t.TicketSeats).ThenInclude(ts => ts.Seat)
+            .AsQueryable();
+
+        // Search by movie title
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(t =>
+                t.ShowTime.Movie.Title.Contains(search) ||
+                t.ShowTime.Auditorium.Theater.Name.Contains(search));
         }
 
-        var tickets = await _context.Tickets
-            .Where(t => t.UserID == userId)
-            .Include(t => t.ShowTime)
-                .ThenInclude(st => st.Movie)
-            .Include(t => t.ShowTime)
-                .ThenInclude(st => st.Auditorium)
-                    .ThenInclude(a => a.Theater)
-            .Include(t => t.TicketSeats)
-                .ThenInclude(ts => ts.Seat)
-            .OrderByDescending(t => t.PurchaseTime)
-            .ToListAsync();
+        // Filter by status
+        if (!string.IsNullOrWhiteSpace(status))
+        {
+            if (Enum.TryParse(status.ToUpper(), out TicketStatus parsedStatus))
+                query = query.Where(t => t.Status == parsedStatus);
+        }
 
+        // Sorting
+        query = sort switch
+        {
+            "date_asc" => query.OrderBy(t => t.PurchaseTime),
+            "date_desc" => query.OrderByDescending(t => t.PurchaseTime),
+            "price_asc" => query.OrderBy(t => t.ShowTime.Price * t.TicketSeats.Count),
+            "price_desc" => query.OrderByDescending(t => t.ShowTime.Price * t.TicketSeats.Count),
+            _ => query.OrderByDescending(t => t.PurchaseTime)
+        };
+
+        var tickets = await query.ToListAsync();
         return View(tickets);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "User")]
+    public async Task<IActionResult> CancelTicket(int ticketId)
+    {
+        var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        var ticket = await _context.Tickets
+            .Include(t => t.ShowTime)
+            .FirstOrDefaultAsync(t => t.ID == ticketId && t.UserID == userId);
+
+        if (ticket == null)
+            return NotFound();
+
+        if (ticket.Status != TicketStatus.PENDING)
+        {
+            TempData["ErrorMessage"] = "Only pending tickets can be cancelled.";
+            return RedirectToAction("UserTickets");
+        }
+
+        if (ticket.ShowTime.StartTime <= DateTime.Now)
+        {
+            TempData["ErrorMessage"] = "You cannot cancel a ticket after the showtime has started.";
+            return RedirectToAction("UserTickets");
+        }
+
+        ticket.Status = TicketStatus.CANCELLED;
+        _context.Update(ticket);
+        await _context.SaveChangesAsync();
+
+        TempData["SuccessMessage"] = "Your ticket has been cancelled successfully.";
+        return RedirectToAction("UserTickets");
+    }
 }

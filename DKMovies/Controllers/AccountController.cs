@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DKMovies.Controllers
 {
@@ -38,6 +39,7 @@ namespace DKMovies.Controllers
             return View();
         }
 
+        // POST: Login (Handle user login or admin login)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string username, string password)
@@ -46,6 +48,7 @@ namespace DKMovies.Controllers
 
             // Try Users first
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+
             if (user != null && user.PasswordHash == hashedPassword)
             {
                 var claims = new List<Claim>
@@ -68,17 +71,6 @@ namespace DKMovies.Controllers
 
             // Then Admins
             var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
-            if (admin != null && admin.PasswordHash == hashedPassword)
-            {
-                var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, admin.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
-            new Claim(ClaimTypes.Role, "Admin")
-        };
-
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
 
             if (admin != null && admin.PasswordHash == hashedPassword)
             {
@@ -172,11 +164,13 @@ namespace DKMovies.Controllers
             return View();
         }
 
-
+        // GET: Logout (Clears session and redirects to home or login)
+        [HttpGet]
+        [Authorize]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync("MyCookieAuth");
-            return RedirectToAction("Login", "Account");
+            await HttpContext.SignOutAsync("MyCookieAuth"); // Sign out the cookie
+            return RedirectToAction("Login", "Account");     // Redirect to login page or home
         }
 
     }

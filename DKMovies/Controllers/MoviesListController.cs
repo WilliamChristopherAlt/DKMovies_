@@ -1,21 +1,54 @@
 ﻿// MoviesListController.cs
+using System.Security.Claims;
+using DKMovies.Models;
+using DKMovies.Models.ViewModels;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using DKMovies.Models;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Drawing.Printing;
-using System.Security.Claims;
 
 namespace DKMovies.Controllers
 {
-    public class MoviesListController : Controller
+    public class LayoutDataFilter : IAsyncActionFilter
     {
         private readonly ApplicationDbContext _context;
-        private const int PageSize = 30;
 
-        public MoviesListController(ApplicationDbContext context)
+        public LayoutDataFilter(ApplicationDbContext context)
         {
+            _context = context;
+        }
+
+        public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
+        {
+            var controller = context.Controller as Controller;
+            if (controller != null)
+            {
+                controller.ViewBag.LayoutGenres = await _context.Genres
+                    .Where(g => g.MovieGenres.Any()) // Only genres linked to movies
+                    .OrderBy(g => g.Name)
+                    .ToListAsync();
+
+                controller.ViewBag.LayoutLanguages = await _context.Languages
+                    .Where(l => l.Movies.Any()) // Only languages used by at least one movie
+                    .OrderBy(l => l.Name)
+                    .ToListAsync();
+
+                controller.ViewBag.LayoutCountries = await _context.Countries
+                    .Where(c => c.Movies.Any()) // Only countries used by at least one movie
+                    .OrderBy(c => c.Name)
+                    .ToListAsync();
+            }
+
+            await next();
+        }
+
+    }
+
+    public class MoviesListController : Controller
+    {
+        private const int PageSize = 30;
+        private readonly ApplicationDbContext _context;
+
+        public MoviesListController(ApplicationDbContext context) {
             _context = context;
         }
 
@@ -27,33 +60,22 @@ namespace DKMovies.Controllers
 
             var movies = await _context.Movies
                 .Include(m => m.Country)
+                .Include(m => m.Director)
                 .Include(m => m.Language)
                 .Include(m => m.Rating)
-                .Include(m => m.Director)
-                .Include(m => m.MovieGenres)
-                    .ThenInclude(mg => mg.Genre)
-                .OrderBy(m => m.Title)
                 .Skip((page - 1) * PageSize)
                 .Take(PageSize)
                 .ToListAsync();
 
-            // Get all review averages for the visible movies
+            // Compute average ratings
             var movieIds = movies.Select(m => m.ID).ToList();
-
             var avgRatings = await _context.Reviews
                 .Where(r => movieIds.Contains(r.MovieID) && r.IsApproved)
                 .GroupBy(r => r.MovieID)
-                .Select(g => new
-                {
-                    MovieID = g.Key,
-                    AvgRating = g.Average(r => r.Rating)
-                })
+                .Select(g => new { MovieID = g.Key, AvgRating = g.Average(r => r.Rating) })
                 .ToListAsync();
 
-            // Add avg rating to each movie via ViewData dictionary
-            var avgRatingDict = avgRatings.ToDictionary(x => x.MovieID, x => x.AvgRating);
-            ViewData["AverageRatings"] = avgRatingDict;
-
+            ViewData["AverageRatings"] = avgRatings.ToDictionary(x => x.MovieID, x => x.AvgRating);
             ViewData["CurrentPage"] = page;
             ViewData["TotalPages"] = totalPages;
 
@@ -90,6 +112,75 @@ namespace DKMovies.Controllers
             return View("Index", movies);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> AdvancedSearch()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Results(SearchModel model, int page = 1)
+        {
+            var query = _context.Movies
+                .Include(m => m.Country)
+                .Include(m => m.Language)
+                .Include(m => m.Rating)
+                .Include(m => m.Director)
+                .Include(m => m.MovieGenres).ThenInclude(mg => mg.Genre)
+                .AsQueryable();
+
+            // Apply filters
+            if (!string.IsNullOrWhiteSpace(model.Title))
+                query = query.Where(m => m.Title.Contains(model.Title));
+            if (!string.IsNullOrWhiteSpace(model.Director))
+                query = query.Where(m => m.Director != null && m.Director.FullName.Contains(model.Director));
+            if (model.GenreId.HasValue)
+                query = query.Where(m => m.MovieGenres.Any(mg => mg.GenreID == model.GenreId));
+            if (model.LanguageId.HasValue)
+                query = query.Where(m => m.LanguageID == model.LanguageId);
+            if (model.CountryId.HasValue)
+                query = query.Where(m => m.CountryID == model.CountryId);
+            if (model.ReleaseFrom.HasValue)
+                query = query.Where(m => m.ReleaseDate >= model.ReleaseFrom);
+            if (model.ReleaseTo.HasValue)
+                query = query.Where(m => m.ReleaseDate <= model.ReleaseTo);
+
+            // Apply sorting
+            query = model.Sort switch
+            {
+                "date_asc" => query.OrderBy(m => m.ReleaseDate),
+                "date_desc" => query.OrderByDescending(m => m.ReleaseDate),
+                "title_desc" => query.OrderByDescending(m => m.Title),
+                _ => query.OrderBy(m => m.Title)
+            };
+
+            // Pagination
+            var totalMovies = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalMovies / (double)PageSize);
+
+            var movies = await query
+                .Skip((page - 1) * PageSize)
+                .Take(PageSize)
+                .ToListAsync();
+
+            // Compute average ratings
+            var movieIds = movies.Select(m => m.ID).ToList();
+            var avgRatings = await _context.Reviews
+                .Where(r => movieIds.Contains(r.MovieID) && r.IsApproved)
+                .GroupBy(r => r.MovieID)
+                .Select(g => new { MovieID = g.Key, AvgRating = g.Average(r => r.Rating) })
+                .ToListAsync();
+
+            ViewData["AverageRatings"] = avgRatings.ToDictionary(x => x.MovieID, x => x.AvgRating);
+            ViewData["CurrentPage"] = page;
+            ViewData["TotalPages"] = totalPages;
+
+            ViewBag.SearchModel = model;
+
+            return View("Index", movies); // Reuse the same view as Index
+        }
+
+
         // GET: MoviesList/Details/5
         public async Task<IActionResult> Details(int? id)
         {
@@ -124,6 +215,18 @@ namespace DKMovies.Controllers
             }
 
             ViewData["IsInWatchlist"] = isInWatchlist;
+
+            // Check reviewed by this user
+            bool hasUserReviewed = false;
+
+            if (User.Identity?.IsAuthenticated == true && User.IsInRole("User"))
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                hasUserReviewed = await _context.Reviews
+                    .AnyAsync(r => r.MovieID == id && r.UserID == userId);
+            }
+
+            ViewData["HasUserReviewed"] = hasUserReviewed;
 
             return View(movie);
         }

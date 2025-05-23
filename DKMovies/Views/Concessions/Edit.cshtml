@@ -1,4 +1,4 @@
-@model DKMovies.Models.Concession
+﻿@model DKMovies.Models.Concession
 
 @{
     ViewData["Title"] = "Edit";
@@ -10,7 +10,7 @@
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit" enctype="multipart/form-data">
+        <form asp-action="Edit">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ID" />
             <div class="form-group">
@@ -24,46 +24,10 @@
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
+                <label asp-for="ImagePath" class="control-label"></label>
+                <input asp-for="ImagePath" class="form-control" />
+                <span asp-validation-for="ImagePath" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="StockLeft" class="control-label"></label>
-                <input asp-for="StockLeft" class="form-control" />
-                <span asp-validation-for="StockLeft" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="UnitID" class="control-label"></label>
-                <select asp-for="UnitID" class="form-control" asp-items="ViewBag.UnitID"></select>
-                <span asp-validation-for="UnitID" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsAvailable" /> @Html.DisplayNameFor(model => model.IsAvailable)
-                </label>
-            </div>
-
-            <!-- Display Current Concession Image -->
-            <div class="form-group">
-                <label class="control-label">Current Image</label><br />
-                @if (!string.IsNullOrEmpty(Model.ImagePath))
-                {
-                    <img src="~/images/concessions/@Model.ImagePath" alt="Concession Image" style="max-width:100%; height:auto; margin-bottom:10px;" />
-                }
-                else
-                {
-                    <p>No concession image.</p>
-                }
-            </div>
-
-            <!-- New Image Upload -->
-            <div class="form-group">
-                <label class="control-label">Upload New Image</label>
-                <input type="file" name="imageFile" class="form-control" accept="image/*" onchange="previewConcessionImage(this)" />
-                <img id="concessionImagePreview" src="#" alt="Concession Image Preview" style="display:none; margin-top:10px; max-width:100%; height:auto;" />
-            </div>
-
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -76,26 +40,5 @@
 </div>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-
-    <script>
-        // Preview function for concession image
-        function previewConcessionImage(input) {
-            const preview = document.getElementById('concessionImagePreview');
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                preview.src = '#';
-                preview.style.display = 'none';
-            }
-        }
-    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }

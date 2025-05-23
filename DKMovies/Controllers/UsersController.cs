@@ -57,7 +57,6 @@ namespace DKMovies.Controllers
         {
             ModelState.Remove(nameof(DKMovies.Models.User.Tickets));
             ModelState.Remove(nameof(DKMovies.Models.User.Reviews));
-            ModelState.Remove(nameof(DKMovies.Models.User.Orders));
             ModelState.Remove(nameof(DKMovies.Models.User.PasswordHash));
 
             if (string.IsNullOrWhiteSpace(Password))
@@ -138,7 +137,6 @@ namespace DKMovies.Controllers
 
             ModelState.Remove(nameof(DKMovies.Models.User.Tickets));
             ModelState.Remove(nameof(DKMovies.Models.User.Reviews));
-            ModelState.Remove(nameof(DKMovies.Models.User.Orders));
             ModelState.Remove(nameof(DKMovies.Models.User.PasswordHash));
             ModelState.Remove("Password");
 

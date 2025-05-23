@@ -1,10 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using DKMovies.Models;
+using DKMovies.Controllers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+//builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<LayoutDataFilter>();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<LayoutDataFilter>();
+});
+
 
 // Add session service to handle login/logout state
 builder.Services.AddDistributedMemoryCache(); // Enable memory cache for session storage

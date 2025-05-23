@@ -14,6 +14,11 @@
     var averageRating = ViewData["AverageRating"] as double? ?? 0;
 
     var isInWatchlist = ViewData["IsInWatchlist"] as bool? ?? false;
+
+    var hasUserReviewed = ViewData["HasUserReviewed"] as bool? ?? false;
+
+    var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 }
 
 <!-- Load Bootstrap Icons -->
@@ -154,7 +159,8 @@
                     @* <button class="btn btn-link text-light mb-2 text-decoration-none"> *@
                     @*     <i class="bi bi-star me-1"></i> Rate *@
                     @* </button> *@
-                    <a asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-light text-decoration-none">
+
+                    <a asp-controller="Tickets" asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-light text-decoration-none">
                         <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
                     </a>
                 }
@@ -172,38 +178,42 @@
 
 <!-- Reviews Section -->
 <div class="container mt-5">
-    @{
-        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    }
-
     @if (isAuthenticated && role == "User" && !string.IsNullOrEmpty(userId))
 
     {
-        <hr />
-        <h5 class="text-dark mt-4">Leave a Review</h5>
-        <form asp-controller="Reviews" asp-action="LeaveReview" method="post" id="reviewForm">
-            <input type="hidden" name="MovieID" value="@Model.ID" />
-            <input type="hidden" name="UserID" value="@userId" />
-            <input type="hidden" name="Rating" id="selectedRating" value="0" />
+        if (!hasUserReviewed)
+        {
+            <hr />
+            <h5 class="text-dark mt-4">Leave a Review</h5>
+            <form asp-controller="Reviews" asp-action="LeaveReview" method="post" id="reviewForm">
+                <input type="hidden" name="MovieID" value="@Model.ID" />
+                <input type="hidden" name="UserID" value="@userId" />
+                <input type="hidden" name="Rating" id="selectedRating" value="0" />
 
-            <div class="mb-3">
-                <label class="form-label d-block">Your Rating</label>
-                <div id="starRating" class="text-warning fs-4">
-                    @for (int i = 1; i <= 5; i++)
-                    {
-                        <i class="bi bi-star" data-value="@i" style="cursor:pointer;"></i>
-                    }
+                <div class="mb-3">
+                    <label class="form-label d-block">Your Rating</label>
+                    <div id="starRating" class="text-warning fs-4">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="bi bi-star" data-value="@i" style="cursor:pointer;"></i>
+                        }
+                    </div>
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <label for="Comment" class="form-label">Comment</label>
-                <textarea name="Comment" class="form-control" rows="3" required></textarea>
-            </div>
+                <div class="mb-3">
+                    <label for="Comment" class="form-label">Comment</label>
+                    <textarea name="Comment" class="form-control" rows="3" required></textarea>
+                </div>
 
-            <button type="submit" class="btn btn-primary">Submit Review</button>
-        </form>
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+            </form>
+        }
+        else
+        {
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-info-circle"></i> You have already reviewed this movie.
+            </div>
+        }
 
         @section Scripts {
         <script>

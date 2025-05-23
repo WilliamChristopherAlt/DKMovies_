@@ -1,4 +1,4 @@
-@model DKMovies.Models.Concession
+﻿@model DKMovies.Models.Concession
 
 @{
     ViewData["Title"] = "Delete";
@@ -24,41 +24,11 @@
             @Html.DisplayFor(model => model.Description)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StockLeft)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StockLeft)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MeasurementUnit)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MeasurementUnit.Name)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsAvailable)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsAvailable)
-        </dd>
-        <dt class = "col-sm-2">
             @Html.DisplayNameFor(model => model.ImagePath)
         </dt>
-        <dd class="col-sm-10">
-            @{
-                var imagePath = string.IsNullOrWhiteSpace(Model.ImagePath)
-                ? Url.Content("~/images/concessions/default.jpg")
-                : Url.Content($"~/images/concessions/{Model.ImagePath}");
-            }
-            <img src="@imagePath" alt="Concession Image" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px;" />
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.ImagePath)
         </dd>
-
     </dl>
     
     <form asp-action="Delete">

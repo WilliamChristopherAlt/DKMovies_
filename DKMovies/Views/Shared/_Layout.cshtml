@@ -1,9 +1,13 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using System.Security.Claims
+@using DKMovies.Models.ViewModels;
+
 
 @{
     var isAuthenticated = User.Identity.IsAuthenticated;
     var role = User.FindFirst(ClaimTypes.Role)?.Value;
+    var searchModel = ViewBag.SearchModel as SearchModel ?? new SearchModel();
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
 }
 
 <!DOCTYPE html>
@@ -23,7 +27,22 @@
             <div class="container-fluid">
 
                 <!-- Left: Brand -->
-                <a class="navbar-brand fs-3 fw-bold text-primary" asp-area="" asp-controller="MoviesList" asp-action="Index">DKMovies</a>
+                <a class="navbar-brand fs-3 fw-bold text-primary me-3" asp-area="" asp-controller="MoviesList" asp-action="Index">DKMovies</a>
+
+                <!-- Inline Search Form (to right of brand) -->
+                <form class="d-flex align-items-center me-auto" asp-controller="MoviesList" asp-action="Search" method="get" style="flex-grow: 1; max-width: 600px;">
+                    <div class="input-group w-100">
+                        <input class="form-control" type="search" name="query"
+                               placeholder="Search titles, directors, genres, countries..." />
+                        <button class="btn btn-outline-primary" type="submit" title="Search">
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#advancedSearchCollapse" aria-expanded="false" aria-controls="advancedSearchCollapse" title="Advanced Search">
+                            <i class="bi bi-sliders"></i>
+                        </button>
+                    </div>
+                </form>
 
                 <!-- Toggle (mobile) -->
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent"
@@ -31,19 +50,8 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                <!-- Center + Right: Collapsible Content -->
-                <div class="collapse navbar-collapse justify-content-between" id="navbarContent">
-
-                    <!-- Center: Search -->
-                    <form class="d-flex mx-auto w-100 justify-content-center" asp-controller="MoviesList" asp-action="Search" method="get">
-                        <div class="input-group w-75 w-md-50">
-                            <input class="form-control" type="search" placeholder="Search movies..." name="query" />
-                            <button class="btn btn-outline-primary" type="submit">Search</button>
-                        </div>
-                    </form>
-
-
-                    <!-- Right: Role-based Dropdown -->
+                <!-- Right: User Menu -->
+                <div class="collapse navbar-collapse justify-content-end" id="navbarContent">
                     <ul class="navbar-nav">
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -59,23 +67,96 @@
                                 {
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">User Info</a></li>
                                     <li><a class="dropdown-item" asp-controller="Watchlist" asp-action="MyWatchlist">My Watchlist</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Transactions" asp-action="History">Transaction History</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Tickets" asp-action="UserTickets">Tickets History</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout" id="logoutLink">Logout</a></li>
                                 }
                                 else if (role == "Admin")
                                 {
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Admin Info</a></li>
                                     <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout" id="logoutLink">Logout</a></li>
                                 }
                             </ul>
-
                         </li>
                     </ul>
-
                 </div>
+
             </div>
         </nav>
+
+
+        <div class="collapse container mt-3" id="advancedSearchCollapse">
+            <form method="get" asp-controller="MoviesList" asp-action="Results" class="row g-3 bg-light p-3 rounded">
+                <div class="col-md-6">
+                    <label class="form-label">Title</label>
+                    <input type="text" name="title" value="@searchModel.Title" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Director</label>
+                    <input type="text" name="director" value="@searchModel.Director" class="form-control" />
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Genre</label>
+                    <select name="genreId" class="form-select">
+                        <option value="">Any</option>
+                        @foreach (var genre in ViewBag.LayoutGenres as List<Genre>)
+                        {
+                            <option value="@genre.ID" selected="@(genre.ID == searchModel.GenreId)">@genre.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Language</label>
+                    <select name="languageId" class="form-select">
+                        <option value="">Any</option>
+                        @foreach (var lang in ViewBag.LayoutLanguages as List<Language>)
+                        {
+                            <option value="@lang.ID" selected="@(lang.ID == searchModel.LanguageId)">@lang.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Country</label>
+                    <select name="countryId" class="form-select">
+                        <option value="">Any</option>
+                        @foreach (var country in ViewBag.LayoutCountries as List<Country>)
+                        {
+                            <option value="@country.ID" selected="@(country.ID == searchModel.CountryId)">@country.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Release From</label>
+                    <input type="date" name="releaseFrom" value="@(searchModel.ReleaseFrom?.ToString("yyyy-MM-dd"))"
+                           max="@today" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Release To</label>
+                    <input type="date" name="releaseTo" value="@(searchModel.ReleaseTo?.ToString("yyyy-MM-dd"))"
+                           max="@today" class="form-control" />
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Sort By</label>
+                    <select name="sort" class="form-select">
+                        <option value="title_asc" selected="@(searchModel.Sort == "title_asc")">Title (A-Z)</option>
+                        <option value="title_desc" selected="@(searchModel.Sort == "title_desc")">Title (Z-A)</option>
+                        <option value="date_asc" selected="@(searchModel.Sort == "date_asc")">Release Date ↑</option>
+                        <option value="date_desc" selected="@(searchModel.Sort == "date_desc")">Release Date ↓</option>
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+                    <a asp-controller="MoviesList" asp-action="Index" class="btn btn-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+
+
     </header>
 
     <div class="container">
@@ -96,3 +177,27 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const logoutLink = document.getElementById("logoutLink");
+            if (logoutLink) {
+                logoutLink.addEventListener("click", function (e) {
+                    const confirmLogout = confirm("Are you sure you want to log out?");
+                    if (!confirmLogout) {
+                        e.preventDefault(); // Cancel navigation
+                    }
+                });
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            tooltipTriggerList.forEach(function (el) {
+                new bootstrap.Tooltip(el);
+            });
+        });
+
+    </script>
+}

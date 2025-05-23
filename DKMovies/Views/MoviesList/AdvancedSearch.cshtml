@@ -1,0 +1,67 @@
+﻿@model object
+@{
+    ViewData["Title"] = "Advanced Movie Search";
+    var genres = ViewData["Genres"] as List<Genre>;
+    var languages = ViewData["Languages"] as List<Language>;
+    var countries = ViewData["Countries"] as List<Country>;
+}
+
+<h2 class="mb-4">Advanced Search</h2>
+
+<form method="get" asp-action="Results" asp-controller="MoviesList" class="row g-3">
+    <div class="col-md-6">
+        <label class="form-label">Movie Title</label>
+        <input type="text" name="title" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Director</label>
+        <input type="text" name="director" class="form-control" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Genre</label>
+        <select name="genreId" class="form-select">
+            <option value="">Any</option>
+            @foreach (var genre in genres)
+            {
+                <option value="@genre.ID">@genre.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Language</label>
+        <select name="languageId" class="form-select">
+            <option value="">Any</option>
+            @foreach (var lang in languages)
+            {
+                <option value="@lang.ID">@lang.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Country</label>
+        <select name="countryId" class="form-select">
+            <option value="">Any</option>
+            @foreach (var country in countries)
+            {
+                <option value="@country.ID">@country.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label">Release Date From</label>
+        <input type="date" name="releaseFrom" class="form-control" />
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Release Date To</label>
+        <input type="date" name="releaseTo" class="form-control" />
+    </div>
+
+    <div class="col-12 d-flex justify-content-between">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+        <a asp-action="Index" class="btn btn-secondary">Reset</a>
+    </div>
+</form>

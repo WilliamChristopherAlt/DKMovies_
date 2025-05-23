@@ -56,7 +56,6 @@ namespace DKMovies.Controllers
         public async Task<IActionResult> Create([Bind("ID,Name,Description")] PaymentMethod paymentMethod)
         {
             ModelState.Remove(nameof(PaymentMethod.TicketPayments));
-            ModelState.Remove(nameof(PaymentMethod.OrderPayments));
             if (await _context.PaymentMethods.AnyAsync(pm => pm.Name == paymentMethod.Name))
             {
                 ModelState.AddModelError("Name", "A payment method with this name already exists.");
@@ -100,7 +99,6 @@ namespace DKMovies.Controllers
             }
 
             ModelState.Remove(nameof(PaymentMethod.TicketPayments));
-            ModelState.Remove(nameof(PaymentMethod.OrderPayments));
             if (await _context.PaymentMethods.AnyAsync(pm => pm.Name == paymentMethod.Name && pm.ID != paymentMethod.ID))
             {
                 ModelState.AddModelError("Name", "A payment method with this name already exists.");

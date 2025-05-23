@@ -153,7 +153,6 @@ namespace DKMovies.Models
 
         public ICollection<Ticket> Tickets { get; set; }
         public ICollection<Review> Reviews { get; set; }
-        public ICollection<Order> Orders { get; set; }
     }
 
     // 7. THEATERS
@@ -366,6 +365,13 @@ namespace DKMovies.Models
         public ICollection<Ticket> Tickets { get; set; }
     }
 
+    public enum TicketStatus
+    {
+        PENDING,
+        CONFIRMED,
+        CANCELLED
+    }
+
     // 13. TICKETS
     public class Ticket
     {
@@ -388,6 +394,12 @@ namespace DKMovies.Models
         [Display(Name = "Purchase Time")]
         public DateTime PurchaseTime { get; set; }
 
+
+        [Required]
+        [Display(Name = "Status")]
+        [EnumDataType(typeof(TicketStatus))]
+        public TicketStatus Status { get; set; } = TicketStatus.PENDING;
+
         [NotMapped]
         [Display(Name = "Total Price")]
         public decimal TotalPrice
@@ -402,10 +414,7 @@ namespace DKMovies.Models
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
         public ICollection<TicketSeat> TicketSeats { get; set; }
-
-        [NotMapped]
-        [Display(Name = "Total Price")]
-        public decimal TotalPrice => (TicketSeats?.Count ?? 0) * (ShowTime?.Price ?? 0);
+        public ICollection<OrderItem> OrderItems { get; set; }
     }
 
     public class TicketSeat
@@ -443,7 +452,6 @@ namespace DKMovies.Models
         public string Description { get; set; }
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
-        public ICollection<OrderPayment> OrderPayments { get; set; }
     }
 
     // 15. TICKET PAYMENTS
@@ -553,23 +561,6 @@ namespace DKMovies.Models
         public ICollection<Admin> Admins { get; set; }
     }
 
-    // 18. MEASUREMENT UNITS
-    public class MeasurementUnit
-    {
-        [Key]
-        [Display(Name = "Unit ID")]
-        public int ID { get; set; }
-
-        [Required, MaxLength(50)]
-        [Display(Name = "Unit Name")]
-        public string Name { get; set; }
-
-        [Display(Name = "Is Continuous")]
-        public bool IsContinuous { get; set; }
-
-        public ICollection<Concession> Concessions { get; set; }
-    }
-
     // 19. CONCESSIONS
     public class Concession
     {
@@ -584,55 +575,45 @@ namespace DKMovies.Models
         [MaxLength(255)]
         public string Description { get; set; }
 
+        [Display(Name = "Image Path")]
+        public string? ImagePath { get; set; }
+
+        // Navigation
+        public ICollection<TheaterConcession> TheaterConcessions { get; set; }
+    }
+
+    // 20. THEATER CONCESSIONS
+    public class TheaterConcession
+    {
+        [Key]
+        [Display(Name = "Theater Concession ID")]
+        public int ID { get; set; }
+
+        [Display(Name = "Theater ID")]
+        public int TheaterID { get; set; }
+
+        [ForeignKey("TheaterID")]
+        public Theater Theater { get; set; }
+
+        [Display(Name = "Concession ID")]
+        public int ConcessionID { get; set; }
+
+        [ForeignKey("ConcessionID")]
+        public Concession Concession { get; set; }
+
         [Display(Name = "Price")]
-        [Required]
         public decimal Price { get; set; }
 
         [Display(Name = "Stock Left")]
-        [Required]
         public int StockLeft { get; set; }
-
-        [Display(Name = "Unit ID")]
-        [Required]
-        public int UnitID { get; set; }
-
-        [ForeignKey("UnitID")]
-        public MeasurementUnit MeasurementUnit { get; set; }
 
         [Display(Name = "Is Available")]
         public bool IsAvailable { get; set; }
 
-        [Display(Name = "Image Path")]
-        public string? ImagePath { get; set; }
-
+        // Navigation
         public ICollection<OrderItem> OrderItems { get; set; }
     }
 
-    // 20. ORDERS
-    public class Order
-    {
-        [Key]
-        [Display(Name = "Order ID")]
-        public int ID { get; set; }
-
-        [Display(Name = "User ID")]
-        public int UserID { get; set; }
-
-        [ForeignKey("UserID")]
-        public User User { get; set; }
-
-        [Display(Name = "Order Time")]
-        public DateTime OrderTime { get; set; }
-
-        [Display(Name = "Total Amount")]
-        public decimal TotalAmount { get; set; }
-
-        [Display(Name = "Order Status")]
-        public string OrderStatus { get; set; }
-
-        public ICollection<OrderItem> OrderItems { get; set; }
-        public ICollection<OrderPayment> OrderPayments { get; set; }
-    }
 
     // 21. ORDER ITEMS
     public class OrderItem
@@ -641,17 +622,17 @@ namespace DKMovies.Models
         [Display(Name = "Order Item ID")]
         public int ID { get; set; }
 
-        [Display(Name = "Order ID")]
-        public int OrderID { get; set; }
+        [Display(Name = "Ticket ID")]
+        public int TicketID { get; set; }
 
-        [ForeignKey("OrderID")]
-        public Order Order { get; set; }
+        [ForeignKey("TicketID")]
+        public Ticket Ticket { get; set; }
 
-        [Display(Name = "Concession ID")]
-        public int ConcessionID { get; set; }
+        [Display(Name = "Theater Concession ID")]
+        public int TheaterConcessionID { get; set; }
 
-        [ForeignKey("ConcessionID")]
-        public Concession Concession { get; set; }
+        [ForeignKey("TheaterConcessionID")]
+        public TheaterConcession TheaterConcession { get; set; }
 
         [Display(Name = "Quantity")]
         public int Quantity { get; set; }
@@ -660,34 +641,6 @@ namespace DKMovies.Models
         public decimal PriceAtPurchase { get; set; }
     }
 
-    // 22. ORDER PAYMENTS
-    public class OrderPayment
-    {
-        [Key]
-        [Display(Name = "Payment ID")]
-        public int ID { get; set; }
-
-        [Display(Name = "Order ID")]
-        public int OrderID { get; set; }
-
-        [ForeignKey("OrderID")]
-        public Order Order { get; set; }
-
-        [Display(Name = "Payment Method ID")]
-        public int MethodID { get; set; }
-
-        [ForeignKey("MethodID")]
-        public PaymentMethod PaymentMethod { get; set; }
-
-        [Display(Name = "Payment Status")]
-        public string PaymentStatus { get; set; }
-
-        [Display(Name = "Paid Amount")]
-        public decimal? PaidAmount { get; set; }
-
-        [Display(Name = "Paid At")]
-        public DateTime? PaidAt { get; set; }
-    }
 
     // 23. REVIEWS
     public class Review

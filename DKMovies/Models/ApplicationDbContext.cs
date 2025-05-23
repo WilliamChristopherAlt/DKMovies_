@@ -29,12 +29,10 @@ namespace DKMovies.Models
         public DbSet<PaymentMethod> PaymentMethods { get; set; }
         public DbSet<EmployeeRole> EmployeeRoles { get; set; }
         public DbSet<Employee> Employees { get; set; }
-        public DbSet<MeasurementUnit> MeasurementUnits { get; set; }
         public DbSet<Concession> Concessions { get; set; }
+        public DbSet<TheaterConcession> TheaterConcession { get; set; }
         public DbSet<Admin> Admins { get; set; }
-        public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<OrderPayment> OrderPayments { get; set; }
         public DbSet<Review> Reviews { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -55,11 +53,9 @@ namespace DKMovies.Models
             modelBuilder.Entity<TicketSeat>().ToTable("TicketSeats");
             modelBuilder.Entity<PaymentMethod>().ToTable("PaymentMethods");
             modelBuilder.Entity<TicketPayment>().ToTable("TicketPayments");
-            modelBuilder.Entity<MeasurementUnit>().ToTable("MeasurementUnits");
             modelBuilder.Entity<Concession>().ToTable("Concessions");
-            modelBuilder.Entity<Order>().ToTable("Orders");
+            modelBuilder.Entity<TheaterConcession>().ToTable("TheaterConcessions");
             modelBuilder.Entity<OrderItem>().ToTable("OrderItems");
-            modelBuilder.Entity<OrderPayment>().ToTable("OrderPayments");
             modelBuilder.Entity<Review>().ToTable("Reviews");
 
             modelBuilder.Entity<Country>().ToTable("Countries");
@@ -68,6 +64,10 @@ namespace DKMovies.Models
             modelBuilder.Entity<Director>().ToTable("Directors");
             modelBuilder.Entity<Language>().ToTable("Languages");
             modelBuilder.Entity<Admin>().ToTable("Admins");
+
+            modelBuilder.Entity<Ticket>()
+                .Property(t => t.Status)
+                .HasConversion<string>(); // stores enum as string
 
             // 1. Countries
             modelBuilder.Entity<Country>()
@@ -193,29 +193,13 @@ namespace DKMovies.Models
                 .HasIndex(e => e.CitizenID)
                 .IsUnique();
 
-            // 18. MeasurementUnits
-            modelBuilder.Entity<MeasurementUnit>()
-                .HasKey(mu => mu.ID);
-
-            modelBuilder.Entity<MeasurementUnit>()
-                .HasIndex(mu => mu.Name)
-                .IsUnique();
-
             // 19. Concessions
             modelBuilder.Entity<Concession>()
                 .HasKey(c => c.ID);
 
-            // 20. Orders
-            modelBuilder.Entity<Order>()
-                .HasKey(o => o.ID);
-
             // 21. OrderItems
             modelBuilder.Entity<OrderItem>()
                 .HasKey(oi => oi.ID);
-
-            // 22. OrderPayments
-            modelBuilder.Entity<OrderPayment>()
-                .HasKey(op => op.ID);
 
             // 23. Reviews
             modelBuilder.Entity<Review>()
@@ -286,12 +270,6 @@ namespace DKMovies.Models
                 .HasMany(u => u.Tickets)
                 .WithOne(t => t.User)
                 .HasForeignKey(t => t.UserID)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Orders)
-                .WithOne(o => o.User)
-                .HasForeignKey(o => o.UserID)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<User>()
@@ -372,12 +350,6 @@ namespace DKMovies.Models
                 .HasForeignKey(tp => tp.MethodID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<PaymentMethod>()
-                .HasMany(pm => pm.OrderPayments)
-                .WithOne(op => op.PaymentMethod)
-                .HasForeignKey(op => op.MethodID)
-                .OnDelete(DeleteBehavior.Cascade);
-
             // 15. TicketPayments
             // No children
 
@@ -395,31 +367,12 @@ namespace DKMovies.Models
                 .HasForeignKey(a => a.EmployeeID)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // 18. MeasurementUnits
-            modelBuilder.Entity<MeasurementUnit>()
-                .HasMany(mu => mu.Concessions)
-                .WithOne(c => c.MeasurementUnit)
-                .HasForeignKey(c => c.UnitID)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // 19. Concessions
             modelBuilder.Entity<Concession>()
-                .HasMany(c => c.OrderItems)
+                .HasMany(c => c.TheaterConcessions)
                 .WithOne(oi => oi.Concession)
                 .HasForeignKey(oi => oi.ConcessionID)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // 20. Orders
-            modelBuilder.Entity<Order>()
-                .HasMany(o => o.OrderItems)
-                .WithOne(oi => oi.Order)
-                .HasForeignKey(oi => oi.OrderID)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<Order>()
-                .HasMany(o => o.OrderPayments)
-                .WithOne(op => op.Order)
-                .HasForeignKey(op => op.OrderID)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // 21. OrderItems

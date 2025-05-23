@@ -2,8 +2,9 @@
 
 @{
     ViewData["Title"] = "Browse Movies";
-    var currentPage = (int)ViewData["CurrentPage"];
-    var totalPages = (int)ViewData["TotalPages"];
+    var currentPage = ViewData["CurrentPage"] as int? ?? 1;
+    var totalPages = ViewData["TotalPages"] as int? ?? 1;
+
 }
 
 <style>
@@ -57,6 +58,13 @@
 
 <div class="movie-section container">
     <h1 class="mb-4 text-center">Browse Movies</h1>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info text-center">
+            <strong>No movies found.</strong> Please try adjusting your search or filters.
+        </div>
+    }
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-5 g-4">
         @foreach (var movie in Model)
