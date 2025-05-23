@@ -50,6 +50,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 // Authorization middleware (to check session state for role-based access)
 app.UseAuthentication();
 app.UseAuthorization();

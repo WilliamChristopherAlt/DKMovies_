@@ -402,6 +402,10 @@ namespace DKMovies.Models
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
         public ICollection<TicketSeat> TicketSeats { get; set; }
+
+        [NotMapped]
+        [Display(Name = "Total Price")]
+        public decimal TotalPrice => (TicketSeats?.Count ?? 0) * (ShowTime?.Price ?? 0);
     }
 
     public class TicketSeat
