@@ -92,9 +92,11 @@ namespace DKMovies.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // If both checks fail
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View();
         }
+
 
         // Sign Up view for normal users (GET)
         [HttpGet]

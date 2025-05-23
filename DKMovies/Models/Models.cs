@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DKMovies.Models
@@ -333,14 +334,14 @@ namespace DKMovies.Models
         public int ID { get; set; }
 
         [Display(Name = "Movie ID")]
-        public int MovieID { get; set; }
-
+        public int MovieID { get; set; } = 0;
+        [ValidateNever]
         [ForeignKey("MovieID")]
         public Movie Movie { get; set; }
 
         [Display(Name = "Auditorium ID")]
-        public int AuditoriumID { get; set; }
-
+        public int AuditoriumID { get; set; } = 0;
+        [ValidateNever]
         [ForeignKey("AuditoriumID")]
         public Auditorium Auditorium { get; set; }
 
@@ -352,7 +353,7 @@ namespace DKMovies.Models
 
         [Display(Name = "Subtitle Language ID")]
         public int? SubtitleLanguageID { get; set; }
-
+        [ValidateNever]
         [ForeignKey("SubtitleLanguageID")]
         public Language? SubtitleLanguage { get; set; }
 
@@ -361,7 +362,7 @@ namespace DKMovies.Models
 
         [Display(Name = "Price")]
         public decimal Price { get; set; }
-
+        [ValidateNever]
         public ICollection<Ticket> Tickets { get; set; }
     }
 
@@ -393,12 +394,6 @@ namespace DKMovies.Models
 
         [Display(Name = "Purchase Time")]
         public DateTime PurchaseTime { get; set; }
-
-
-        [Required]
-        [Display(Name = "Status")]
-        [EnumDataType(typeof(TicketStatus))]
-        public TicketStatus Status { get; set; } = TicketStatus.PENDING;
 
         [NotMapped]
         [Display(Name = "Total Price")]
