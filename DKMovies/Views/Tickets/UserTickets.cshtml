@@ -1,0 +1,53 @@
+﻿@model List<DKMovies.Models.Ticket>
+
+@{
+    ViewData["Title"] = "Your Ticket History";
+}
+
+<h2 class="mb-4">Your Ticket History</h2>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">You haven’t purchased any tickets yet.</p>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var ticket in Model)
+        {
+            var showtime = ticket.ShowTime;
+            var movie = showtime.Movie;
+            var auditorium = showtime.Auditorium;
+            var theater = auditorium.Theater;
+            var seatLabels = ticket.TicketSeats
+            .OrderBy(s => s.Seat.RowLabel)
+            .ThenBy(s => s.Seat.SeatNumber)
+            .Select(s => $"{s.Seat.RowLabel}{s.Seat.SeatNumber}");
+
+            var posterPath = string.IsNullOrWhiteSpace(movie.PosterImagePath)
+            ? Url.Content("~/images/movie_posters/default.jpg")
+            : Url.Content($"~/images/movie_posters/{movie.PosterImagePath}");
+
+            <div class="list-group-item mb-4 shadow-sm border rounded p-3">
+                <div class="row">
+                    <!-- Poster -->
+                    <div class="col-md-2">
+                        <img src="@posterPath" alt="@movie.Title" class="img-fluid rounded" style="object-fit: cover;" />
+                    </div>
+
+                    <!-- Info -->
+                    <div class="col-md-10">
+                        <h5 class="mb-2">@movie.Title</h5>
+                        <div><strong>Theater:</strong> @theater.Name - @theater.Location</div>
+                        <div><strong>Auditorium:</strong> @auditorium.ID</div>
+                        <div><strong>Showtime:</strong> @showtime.StartTime.ToString("f")</div>
+                        <div><strong>Seats:</strong> @string.Join(", ", seatLabels)</div>
+                        <div><strong>Total Seats:</strong> @seatLabels.Count()</div>
+                        <div><strong>Total Price:</strong> @ticket.TotalPrice.ToString("C")</div>
+                        <div><strong>Purchased On:</strong> @ticket.PurchaseTime.ToString("g")</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

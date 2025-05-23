@@ -106,7 +106,6 @@ INSERT INTO Theaters (Name, Location, Phone) VALUES
 ('MovieLand Dallas', 'Dallas', '555-3344'),
 ('Skyline Theaters', 'Denver', '555-4455');
 
-
 -- EMPLOYEES
 INSERT INTO Employees (TheaterID, RoleID, FullName, Email, Phone, Gender, DateOfBirth, CitizenID, Address, Salary, ProfileImagePath) VALUES
 (1, 1, 'Alice Manager', 'alice@cineworld.com', '9999999999', 'Female', '1980-07-01', 'AAA111', '123 Sunset Blvd', 5000, 'women/10.jpg'),
@@ -393,6 +392,48 @@ INSERT INTO MovieGenres (MovieID, GenreID) VALUES
 (48, 5), (48, 7), (48, 8),
 (49, 3), (49, 6), (49, 9);
 
+/*
+-- Randomly insert favorites for each user
+-- Let's assume each user has 5-15 favorite movies randomly selected
+
+DECLARE @MinFavorites INT = 5;
+DECLARE @MaxFavorites INT = 15;
+
+DECLARE @UserID INT;
+DECLARE @RandomCount INT;
+DECLARE @MovieID_ INT;
+
+-- Loop through each user
+SET @UserID = 1;
+WHILE @UserID <= 10
+BEGIN
+    -- Random number of favorites for this user
+    SET @RandomCount = FLOOR(RAND() * (@MaxFavorites - @MinFavorites + 1)) + @MinFavorites;
+    
+    DECLARE @InsertedMovies TABLE (MovieID INT);
+
+    WHILE @RandomCount > 0
+    BEGIN
+        -- Randomly select a movie ID
+        SET @MovieID_ = FLOOR(RAND() * 130) + 1;
+
+        -- Only insert if not already favorited
+        IF NOT EXISTS (SELECT 1 FROM MovieUserFavourites WHERE UserID = @UserID AND MovieID = @MovieID_)
+        BEGIN
+            INSERT INTO MovieUserFavourites (UserID, MovieID)
+            VALUES (@UserID, @MovieID_);
+
+            -- Track inserted movies to avoid duplicates in this loop
+            INSERT INTO @InsertedMovies (MovieID) VALUES (@MovieID_);
+            
+            SET @RandomCount = @RandomCount - 1;
+        END
+    END
+
+    SET @UserID = @UserID + 1;
+END */
+
+
 -- SHOWTIMES: Insert 1–5 showtimes per movie for first 49 movies
 SET NOCOUNT ON;
 
@@ -400,7 +441,7 @@ DECLARE @movieID INT = 1
 
 WHILE @movieID <= 130
 BEGIN
-    DECLARE @showCount INT = ABS(CHECKSUM(NEWID())) % 5 + 1  -- 1 to 5 showtimes
+    DECLARE @showCount INT = ABS(CHECKSUM(NEWID())) % 10 + 1  -- 1 to 5 showtimes
     DECLARE @i INT = 1
 
     WHILE @i <= @showCount

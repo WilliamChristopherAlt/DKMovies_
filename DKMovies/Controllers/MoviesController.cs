@@ -129,6 +129,17 @@ namespace DKMovies.Controllers
             {
                 return NotFound();
             }
+            var showtimes = await _context.ShowTimes
+                .Where(s => s.MovieID == id)
+                .Select(s => new {
+                    s.StartTime,
+                    TheaterName = s.Auditorium.Theater.Name,
+                    AuditoriumName = s.Auditorium.Name
+                })
+                .ToListAsync();
+
+            ViewBag.ShowTimes = showtimes;
+
             ViewData["CountryID"] = new SelectList(_context.Countries, "ID", "Name", movie.CountryID);
             ViewData["DirectorID"] = new SelectList(_context.Directors, "ID", "FullName", movie.DirectorID);
             ViewData["LanguageID"] = new SelectList(_context.Languages, "ID", "Name", movie.LanguageID);

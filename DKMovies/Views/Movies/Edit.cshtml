@@ -5,11 +5,12 @@
 }
 
 <h1>Edit</h1>
-
 <h4>Movie</h4>
 <hr />
+
 <div class="row">
-    <div class="col-md-4">
+    <!-- Left Column: Movie Edit Form -->
+    <div class="col-md-6">
         <form asp-action="Edit" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ID" />
@@ -57,7 +58,7 @@
                 <label class="control-label">Current Profile Image</label><br />
                 @if (!string.IsNullOrEmpty(Model.PosterImagePath))
                 {
-                    <img src="~/images/movies/@Model.PosterImagePath" alt="Image" style="max-width:100%; height:auto; margin-bottom:10px;" />
+                    <img src="~/images/movie_posters/@Model.PosterImagePath" alt="Image" style="max-width:100%; height:auto; margin-bottom:10px;" />
                 }
                 else
                 {
@@ -73,17 +74,50 @@
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
         </form>
+        <div>
+            <a asp-action="Index">Back to List</a>
+        </div>
+    </div>
+
+    <!-- Right Column: ShowTimes for this Movie -->
+    <div class="col-md-6">
+        <h4>Showtime</h4>
+        <!-- Add Showtime Button -->
+        <div class="mb-3">
+            <a asp-action="Create" asp-controller="ShowTimes" asp-route-movieId="@Model.ID" class="btn btn-success">+ Add Showtime</a>
+        </div>
+        <hr />
+        @if (ViewBag.ShowTimes != null && ViewBag.ShowTimes.Count > 0)
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Theater</th>
+                        <th>Auditorium</th>
+                        <th>Start Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var showtime in ViewBag.ShowTimes)
+                    {
+                        <tr>
+                            <td>@showtime.TheaterName</td>
+                            <td>@showtime.AuditoriumName</td>
+                            <td>@showtime.StartTime.ToString("g")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>No showtimes available for this movie.</p>
+        }
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @await Html.PartialAsync("_ValidationScriptsPartial")
     <script>
         function previewImage(input) {
             const preview = document.getElementById('imagePreview');
@@ -102,4 +136,3 @@
         }
     </script>
 }
-
