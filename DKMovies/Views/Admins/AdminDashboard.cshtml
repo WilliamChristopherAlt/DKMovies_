@@ -1,0 +1,117 @@
+﻿@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h1>Admin Panel</h1>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<p>
+    <a asp-controller="Users" asp-action="Index" class="btn btn-primary">Manage Users</a>
+</p>
+<p>
+    <a asp-controller="Movies" asp-action="Index" class="btn btn-secondary">Manage Movies</a>
+</p>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body">
+                <h5>Total Users</h5>
+                <h2>@ViewBag.TotalUsers</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body">
+                <h5>Total Employees</h5>
+                <h2>@ViewBag.TotalEmployees</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div>
+    <h2>Orders and Tickets Over Time</h2>
+    <canvas id="salesChart"></canvas>
+</div>
+@section Scripts {
+    <script>
+        const dates = @Html.Raw(Json.Serialize(ViewData["Dates"]));
+        const orderTotals = @Html.Raw(Json.Serialize(ViewData["OrderTotals"]));
+        const ticketTotals = @Html.Raw(Json.Serialize(ViewData["TicketTotals"]));
+        const totalIncome = @Html.Raw(Json.Serialize(ViewData["TotalIncome"]));
+
+        // Create the line chart
+        const ctx = document.getElementById('salesChart').getContext('2d');
+        const salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates, // X-axis: dates
+                datasets: [
+                    {
+                        label: 'Orders Total Amount',
+                        data: orderTotals,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: false,
+                        tension: 0.4,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Tickets Total Price',
+                        data: ticketTotals,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: false,
+                        tension: 0.4,
+                        spanGaps: true
+                    },
+                    {
+                        label: 'Total Income (Orders + Tickets)',
+                        data: totalIncome,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: false,
+                        tension: 0.4,
+                        spanGaps: true,
+                        hidden: false // Initially visible
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Orders vs Tickets Sales Over Time'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Toggle Total Income visibility
+        document.getElementById('showTotalIncome').addEventListener('change', function() {
+            salesChart.data.datasets[2].hidden = !this.checked;
+            salesChart.update();
+        });
+    </script>
+}
+

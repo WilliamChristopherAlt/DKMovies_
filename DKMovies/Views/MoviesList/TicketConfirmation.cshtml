@@ -1,0 +1,17 @@
+﻿@model DKMovies.Models.Ticket
+
+<div class="container mt-4">
+    <h2>Ticket Confirmation</h2>
+    <p><strong>Movie:</strong> @Model.ShowTime.Movie.Title</p>
+    <p><strong>Showtime:</strong> @Model.ShowTime.StartTime.ToString("f")</p>
+    <p>
+        <strong>Seats:</strong>
+        @foreach (var seat in Model.TicketSeats)
+        {
+            <span>@seat.Seat.RowLabel@seat.Seat.SeatNumber </span>
+        }
+    </p>
+    <p><strong>Total Price:</strong> $@Model.TotalPrice</p>
+
+    <a href="/" class="btn btn-primary mt-3">Back to Home</a>
+</div>
