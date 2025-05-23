@@ -26,7 +26,59 @@ namespace DKMovies.Controllers
             var applicationDbContext = _context.Admins.Include(a => a.Employee);
             return View(await applicationDbContext.ToListAsync());
         }
+        public IActionResult Dashboard()
+        {
+            var orderData = _context.Orders
+                .GroupBy(o => o.OrderTime.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    TotalAmount = g.Sum(o => o.TotalAmount)
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
 
+            var ticketData = _context.Tickets
+                .Include(t => t.TicketSeats)
+                .Include(t => t.ShowTime)
+                .AsEnumerable() 
+                .GroupBy(t => t.PurchaseTime.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    TotalPrice = g.Sum(t => (t.TicketSeats?.Count ?? 0) * (t.ShowTime?.Price ?? 0))
+                })
+                .OrderBy(g => g.Date)
+                .ToList();
+
+            // Combine all unique dates from both datasets
+            var dates = orderData.Select(o => o.Date)
+                .Union(ticketData.Select(t => t.Date))
+                .Distinct()
+                .OrderBy(d => d)
+                .Select(d => d.ToString("yyyy-MM-dd"))
+                .ToList();
+
+            // Map totals, ensuring 0 for missing dates
+            var orderTotals = dates.Select(d =>
+                orderData.FirstOrDefault(o => o.Date.ToString("yyyy-MM-dd") == d)?.TotalAmount ?? 0)
+                .ToList();
+
+            var ticketTotals = dates.Select(d =>
+                ticketData.FirstOrDefault(t => t.Date.ToString("yyyy-MM-dd") == d)?.TotalPrice ?? 0)
+                .ToList();
+
+            // Calculate total income (orders + tickets)
+            var totalIncome = orderTotals.Zip(ticketTotals, (o, t) => o + t).ToList();
+
+            ViewBag.TotalUsers = _context.Users.Count();
+            ViewBag.TotalEmployees = _context.Employees.Count();
+            ViewData["Dates"] = dates;
+            ViewData["OrderTotals"] = orderTotals;
+            ViewData["TicketTotals"] = ticketTotals;
+            ViewData["TotalIncome"] = totalIncome;
+            return View();
+        }
         // GET: Admins/Details/5
         public async Task<IActionResult> Details(int? id)
         {

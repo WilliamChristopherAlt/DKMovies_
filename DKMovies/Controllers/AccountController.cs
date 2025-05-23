@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace DKMovies.Controllers
 {
@@ -73,18 +74,6 @@ namespace DKMovies.Controllers
                 var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, admin.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
-            new Claim(ClaimTypes.Role, "Admin")
-        };
-
-                var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
-
-            if (admin != null && admin.PasswordHash == hashedPassword)
-            {
-                var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Name, admin.Username),
             new Claim(ClaimTypes.NameIdentifier, admin.ID.ToString()),
             new Claim(ClaimTypes.Role, "Admin")
         };
@@ -100,9 +89,11 @@ namespace DKMovies.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // If both checks fail
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View();
         }
+
 
         // Sign Up view for normal users (GET)
         [HttpGet]

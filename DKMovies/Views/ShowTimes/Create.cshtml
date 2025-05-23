@@ -1,60 +1,166 @@
 @model DKMovies.Models.ShowTime
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Showtime";
+    var isLocked = ViewBag.MovieID != null && (int)ViewBag.MovieID != 0;
 }
 
-<h1>Create</h1>
+<h1>Create Showtime</h1>
 
 <h4>ShowTime</h4>
-<hr />
+
 <div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="col-md-6">
+        <form asp-action="Create" method="post">
+            @if (isLocked)
+            {
+                <input type="hidden" asp-for="MovieID" value="@ViewBag.MovieID" />
+                <div class="form-group">
+                    <label>Movie</label>
+                    <input type="text" class="form-control" value="@ViewBag.MovieTitle" readonly />
+                </div>
+                <input type="hidden" asp-for="DurationMinutes" value="@ViewBag.MovieDuration" />
+                <div class="form-group">
+                    <label>Duration (minutes)</label>
+                    <input type="text" class="form-control" value="@ViewBag.MovieDuration" readonly />
+                </div>
+            }
+            else
+            {
+                <div class="form-group">
+                    <label>Movie</label>
+                    <select asp-for="MovieID" class="form-control" asp-items="@(new SelectList(ViewBag.Movies, "ID", "Title"))" id="movieSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Duration (minutes)</label>
+                    <input type="text" class="form-control" id="duration" name="DurationMinutes" readonly />
+                </div>
+
+            }
+
             <div class="form-group">
-                <label asp-for="ID" class="control-label"></label>
-                <select asp-for="ID" class ="form-control" asp-items="ViewBag.ID"></select>
+                <label for="TheaterID">Theater</label>
+                <select id="TheaterID" name="TheaterID" class="form-control">
+                    <option value="">-- Select Theater --</option>
+                    @foreach (var theater in ViewBag.Theaters as List<DKMovies.Models.Theater>)
+                    {
+                        <option value="@theater.ID">@theater.Name</option>
+                    }
+                </select>
             </div>
-            <div class="form-group">
-                <label asp-for="MovieID" class="control-label"></label>
-                <select asp-for="MovieID" class ="form-control" asp-items="ViewBag.MovieID"></select>
-            </div>
+
             <div class="form-group">
                 <label asp-for="AuditoriumID" class="control-label"></label>
-                <select asp-for="AuditoriumID" class ="form-control" asp-items="ViewBag.AuditoriumID"></select>
+                <select asp-for="AuditoriumID" class="form-control" asp-items="@(ViewData["AuditoriumID"] as IEnumerable<SelectListItem>)" id="AuditoriumID">
+                    <option value="">-- Select Auditorium --</option>
+                </select>
+                <span asp-validation-for="AuditoriumID" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="StartTime" class="control-label"></label>
-                <input asp-for="StartTime" class="form-control" />
+                <input asp-for="StartTime" class="form-control" type="datetime-local" id="StartTime" />
                 <span asp-validation-for="StartTime" class="text-danger"></span>
             </div>
-            <div class="form-group">
-                <label asp-for="DurationMinutes" class="control-label"></label>
-                <input asp-for="DurationMinutes" class="form-control" />
-                <span asp-validation-for="DurationMinutes" class="text-danger"></span>
-            </div>
+
             <div class="form-group">
                 <label asp-for="SubtitleLanguageID" class="control-label"></label>
-                <input asp-for="SubtitleLanguageID" class="form-control" />
+                <select asp-for="SubtitleLanguageID" class="form-control" asp-items="ViewBag.LanguageID">
+                    <option value="">-- None --</option>
+                </select>
                 <span asp-validation-for="SubtitleLanguageID" class="text-danger"></span>
             </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="Is3D" /> @Html.DisplayNameFor(model => model.Is3D)
-                </label>
+
+            <div class="form-check mb-3">
+                <input asp-for="Is3D" class="form-check-input" />
+                <label asp-for="Is3D" class="form-check-label"></label>
             </div>
+
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
 <div>
-    <a asp-action="Index">Back to List</a>
+    <strong>Debug:</strong><br />
+    MovieID: <span id="debugMovieID">@Model?.MovieID</span><br />
+    AuditoriumID: <span id="debugAuditoriumID"></span>
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script>
+        $(document).ready(function () {
+            // Set up StartTime input
+            const startTimeInput = document.getElementById("StartTime");
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = (now.getMonth() + 1).toString().padStart(2, '0');
+            const day = now.getDate().toString().padStart(2, '0');
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const todayFormatted = `${year}-${month}-${day}T${hours}:${minutes}`;
+            startTimeInput.min = todayFormatted;
+            if (!startTimeInput.value) {
+                startTimeInput.value = todayFormatted;
+            }
+
+            // Movie change handler
+            $('#movieSelect').change(function () {
+                var movieId = $(this).val();
+                fetch(`/Movies/GetDuration/${movieId}`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Network response was not ok.");
+                        return response.json();
+                    })
+                    .then(data => {
+                        $('#duration').val(data.duration);
+                    })
+                    .catch(error => {
+                        console.error("Error fetching duration:", error);
+                        $('#duration').val('');
+                    });
+            });
+
+            // Theater -> Auditorium cascading dropdown
+            $('#TheaterID').change(function () {
+                var theaterId = $(this).val();
+                var auditoriumDropdown = $('#AuditoriumID');
+                auditoriumDropdown.empty().append('<option value="">Loading...</option>');
+
+                if (theaterId) {
+                    $.ajax({
+                        url: '@Url.Action("GetAuditoriumsByTheater", "ShowTimes")',
+                        type: 'GET',
+                        data: { theaterId: theaterId },
+                        success: function (data) {
+                            auditoriumDropdown.empty().append('<option value="">-- Select Auditorium --</option>');
+                            $.each(data, function (index, auditorium) {
+                                auditoriumDropdown.append(`<option value="${auditorium.id}">${auditorium.name}</option>`);
+                            });
+                            var previouslySelected = '@Model.AuditoriumID';
+                            if (previouslySelected) {
+                                auditoriumDropdown.val(previouslySelected);
+                            }
+                        },
+                        error: function () {
+                            auditoriumDropdown.empty().append('<option value="">Error loading auditoriums</option>');
+                        }
+                    });
+                } else {
+                    auditoriumDropdown.empty().append('<option value="">-- Select Auditorium --</option>');
+                }
+            });
+
+            // Auditorium debug
+            $('#AuditoriumID').change(function () {
+                $('#debugAuditoriumID').text(this.value);
+            });
+        });
+    </script>
 }
