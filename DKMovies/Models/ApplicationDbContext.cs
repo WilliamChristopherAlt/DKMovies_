@@ -21,7 +21,7 @@ namespace DKMovies.Models
         public DbSet<Seat> Seats { get; set; }
         public DbSet<Movie> Movies { get; set; }
         public DbSet<MovieGenre> MovieGenres { get; set; }
-        public DbSet<MovieUserFavourite> MovieUserFavourites { get; set; }
+        public DbSet<WatchListSingular> WatchList { get; set; }
         public DbSet<ShowTime> ShowTimes { get; set; }
         public DbSet<Ticket> Tickets { get; set; }
         public DbSet<TicketSeat> TicketSeats { get; set; }
@@ -49,7 +49,7 @@ namespace DKMovies.Models
             modelBuilder.Entity<Seat>().ToTable("Seats");
             modelBuilder.Entity<Movie>().ToTable("Movies");
             modelBuilder.Entity<MovieGenre>().ToTable("MovieGenres");
-            modelBuilder.Entity<MovieUserFavourite>().ToTable("MovieUserFavourites");
+            modelBuilder.Entity<WatchListSingular>().ToTable("WatchList");
             modelBuilder.Entity<ShowTime>().ToTable("ShowTimes");
             modelBuilder.Entity<Ticket>().ToTable("Tickets");
             modelBuilder.Entity<TicketSeat>().ToTable("TicketSeats");

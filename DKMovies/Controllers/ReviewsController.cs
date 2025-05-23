@@ -71,6 +71,42 @@ namespace DKMovies.Controllers
             return View();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LeaveReview([Bind("MovieID,UserID,Rating,Comment")] Review review)
+        {
+            ModelState.Remove(nameof(Review.Movie));
+            ModelState.Remove(nameof(Review.User));
+
+            if (!ModelState.IsValid)
+            {
+                // Print validation errors to the console
+                foreach (var entry in ModelState)
+                {
+                    var key = entry.Key;
+                    var errors = entry.Value.Errors;
+                    foreach (var error in errors)
+                    {
+                        Console.WriteLine($"ModelState Error - Field: {key}, Error: {error.ErrorMessage}");
+                    }
+                }
+
+                // Optional: store a TempData message for UI feedback
+                TempData["ReviewError"] = "Invalid review submission. Please check the form.";
+
+                return RedirectToAction("Details", "MoviesList", new { id = review.MovieID });
+            }
+
+            review.CreatedAt = DateTime.Now;
+            review.IsApproved = false; // Or true if no moderation required
+
+            _context.Reviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Details", "MoviesList", new { id = review.MovieID });
+        }
+
+
         // POST: Reviews/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.

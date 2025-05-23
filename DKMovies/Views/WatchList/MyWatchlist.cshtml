@@ -1,0 +1,84 @@
+﻿@model IEnumerable<DKMovies.Models.WatchListSingular>
+
+@{
+    ViewData["Title"] = "My Watchlist";
+}
+
+<style>
+    .movie-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+        .movie-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.2);
+        }
+
+    .remove-wrapper {
+        position: absolute;
+        bottom: 12px;
+        right: 12px;
+        z-index: 2;
+    }
+
+    .remove-icon {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 6px 8px;
+        color: #dc3545;
+        border: none;
+        font-size: 1rem;
+        transition: background 0.2s, color 0.2s;
+    }
+
+        .remove-icon:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+    .card-img-top {
+        height: 300px;
+        object-fit: cover;
+    }
+</style>
+
+<h2 class="mb-4">My Watchlist</h2>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">You have no movies in your watchlist.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="position-relative h-100">
+
+                    <a asp-controller="MoviesList" asp-action="Details" asp-route-id="@item.MovieID" class="movie-card d-block h-100">
+                        <div class="card h-100 shadow-sm">
+                            <img src="~/images/movie_posters/@(item.Movie.PosterImagePath ?? "default.jpg")" class="card-img-top" />
+                            <div class="card-body">
+                                <h5 class="card-title">@item.Movie.Title</h5>
+                                <p class="card-text text-truncate">@item.Movie.Description</p>
+                            </div>
+                        </div>
+                    </a>
+
+                    <form asp-controller="Watchlist" asp-action="Remove" method="post" class="remove-wrapper">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="movieId" value="@item.MovieID" />
+                        <button type="submit" class="remove-icon" title="Remove from watchlist">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        }
+    </div>
+}

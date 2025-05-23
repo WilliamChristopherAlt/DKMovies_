@@ -5,6 +5,7 @@ using DKMovies.Models;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Drawing.Printing;
+using System.Security.Claims;
 
 namespace DKMovies.Controllers
 {
@@ -112,6 +113,17 @@ namespace DKMovies.Controllers
             // Calculate average rating
             var averageRating = movie.Reviews.Any() ? movie.Reviews.Average(r => r.Rating) : 0;
             ViewData["AverageRating"] = averageRating;
+
+            // Check watchlist status
+            bool isInWatchlist = false;
+            if (User.Identity.IsAuthenticated && User.IsInRole("User"))
+            {
+                var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+                isInWatchlist = await _context.WatchList
+                    .AnyAsync(w => w.UserID == userId && w.MovieID == id);
+            }
+
+            ViewData["IsInWatchlist"] = isInWatchlist;
 
             return View(movie);
         }
@@ -225,7 +237,6 @@ namespace DKMovies.Controllers
                 UserID = userId,
                 ShowTimeID = ShowTimeID,
                 PurchaseTime = DateTime.Now,
-                TotalPrice = availableSeats.Count * 10 // Adjust price logic if needed
             };
 
             _context.Tickets.Add(ticket);

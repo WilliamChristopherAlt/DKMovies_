@@ -8,18 +8,29 @@ builder.Services.AddControllersWithViews();
 
 // Add session service to handle login/logout state
 builder.Services.AddDistributedMemoryCache(); // Enable memory cache for session storage
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
-    options.Cookie.HttpOnly = true; // Ensure the session cookie is only accessible via HTTP
-    options.Cookie.IsEssential = true; // Make the session cookie essential for the app to function
-});
+//builder.Services.AddSession(options =>
+//{
+//    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set session timeout
+//    options.Cookie.HttpOnly = true; // Ensure the session cookie is only accessible via HTTP
+//    options.Cookie.IsEssential = true; // Make the session cookie essential for the app to function
+//});
 
 // Add DbContext for SQL Server connection
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddAuthentication("MyCookieAuth")
+    .AddCookie("MyCookieAuth", options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+    });
+
+builder.Services.AddAuthorization();
+
 
 var app = builder.Build();
 
@@ -35,11 +46,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 // Add session middleware before routing
-app.UseSession();
+//app.UseSession();
 
 app.UseRouting();
 
 // Authorization middleware (to check session state for role-based access)
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -7,6 +7,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 namespace DKMovies.Controllers
 {
@@ -43,34 +45,55 @@ namespace DKMovies.Controllers
         {
             var hashedPassword = HashPassword(password);
 
-            // First, try to find a user in the Users table
+            // Try Users first
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
 
             if (user != null && user.PasswordHash == hashedPassword)
             {
-                HttpContext.Session.SetString("Username", user.Username);
-                HttpContext.Session.SetString("UserID", user.ID.ToString());
-                HttpContext.Session.SetString("Role", "User");
+                var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.NameIdentifier, user.ID.ToString()),
+            new Claim(ClaimTypes.Role, "User")
+        };
+
+                var claimsIdentity = new ClaimsIdentity(claims, "MyCookieAuth");
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
                 return RedirectToAction("Index", "Home");
             }
 
-            // If not found in Users, try to find an admin
+            // Then Admins
             var admin = await _context.Admins.FirstOrDefaultAsync(a => a.Username == username);
 
             if (admin != null && admin.PasswordHash == hashedPassword)
             {
-                HttpContext.Session.SetString("Username", admin.Username);
-                HttpContext.Session.SetString("UserID", admin.ID.ToString());
-                HttpContext.Session.SetString("Role", "Admin");
-                return RedirectToAction("Home", "Index");
-            }
-            Console.WriteLine("Cant log in");
+                var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.Name, admin.Username),
+            new Claim(ClaimTypes.NameIdentifier, admin.ID.ToString()),
+            new Claim(ClaimTypes.Role, "Admin")
+        };
 
-            // If neither match
+                var claimsIdentity = new ClaimsIdentity(claims, "MyCookieAuth");
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                };
+
+                await HttpContext.SignInAsync("MyCookieAuth", new ClaimsPrincipal(claimsIdentity), authProperties);
+                return RedirectToAction("Index", "Home");
+            }
+
             ModelState.AddModelError(string.Empty, "Invalid username or password.");
             return View();
         }
-
 
         // Sign Up view for normal users (GET)
         [HttpGet]

@@ -304,10 +304,10 @@ namespace DKMovies.Models
         public Genre Genre { get; set; }
     }
 
-    public class MovieUserFavourite
+    public class WatchListSingular
     {
         [Key]
-        [Display(Name = "Favourite ID")]
+        [Display(Name = "Watchlist ID")]
         public int ID { get; set; }
 
         [Display(Name = "User")]
@@ -321,6 +321,9 @@ namespace DKMovies.Models
 
         [ForeignKey("MovieID")]
         public Movie Movie { get; set; }
+
+        [Display(Name = "Added At")]
+        public DateTime AddedAt { get; set; } = DateTime.Now;
     }
 
     // 12. SHOWTIMES
@@ -357,6 +360,9 @@ namespace DKMovies.Models
         [Display(Name = "3D")]
         public bool Is3D { get; set; }
 
+        [Display(Name = "Price")]
+        public decimal Price { get; set; }
+
         public ICollection<Ticket> Tickets { get; set; }
     }
 
@@ -382,8 +388,17 @@ namespace DKMovies.Models
         [Display(Name = "Purchase Time")]
         public DateTime PurchaseTime { get; set; }
 
+        [NotMapped]
         [Display(Name = "Total Price")]
-        public decimal TotalPrice { get; set; }
+        public decimal TotalPrice
+        {
+            get
+            {
+                var seatCount = TicketSeats?.Count ?? 0;
+                var pricePerSeat = ShowTime?.Price ?? 0;
+                return pricePerSeat * seatCount;
+            }
+        }
 
         public ICollection<TicketPayment> TicketPayments { get; set; }
         public ICollection<TicketSeat> TicketSeats { get; set; }
@@ -678,14 +693,18 @@ namespace DKMovies.Models
         public int ID { get; set; }
 
         [Display(Name = "Movie ID")]
+        [Required]
         public int MovieID { get; set; }
 
+        [NotMapped]
         [ForeignKey("MovieID")]
         public Movie Movie { get; set; }
 
         [Display(Name = "User ID")]
+        [Required]
         public int UserID { get; set; }
 
+        [NotMapped]
         [ForeignKey("UserID")]
         public User User { get; set; }
 

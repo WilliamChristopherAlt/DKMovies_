@@ -1,7 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Http
-@inject IHttpContextAccessor HttpContextAccessor
+@using System.Security.Claims
+
 @{
-    var role = HttpContextAccessor.HttpContext?.Session.GetString("Role");
+    var isAuthenticated = User.Identity.IsAuthenticated;
+    var role = User.FindFirst(ClaimTypes.Role)?.Value;
 }
 
 <!DOCTYPE html>
@@ -48,7 +50,7 @@
                                 <i class="bi bi-person-circle fs-4"></i>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                @if (string.IsNullOrEmpty(role))
+                                @if (!isAuthenticated)
                                 {
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Login">Login</a></li>
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Register">Sign Up</a></li>
@@ -56,14 +58,18 @@
                                 else if (role == "User")
                                 {
                                     <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">User Info</a></li>
-                                    <li><a class="dropdown-item" asp-controller="Movies" asp-action="Favorites">Favorite Movies</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Watchlist" asp-action="MyWatchlist">My Watchlist</a></li>
                                     <li><a class="dropdown-item" asp-controller="Transactions" asp-action="History">Transaction History</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
                                 }
                                 else if (role == "Admin")
                                 {
-                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">User Info</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Profile">Admin Info</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Admin" asp-action="Dashboard">Admin Dashboard</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a></li>
                                 }
                             </ul>
+
                         </li>
                     </ul>
 

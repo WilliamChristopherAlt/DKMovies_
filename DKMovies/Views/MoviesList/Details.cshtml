@@ -12,6 +12,8 @@
         : Url.Content($"~/images/movie_posters/{Model.PosterImagePath}");
 
     var averageRating = ViewData["AverageRating"] as double? ?? 0;
+
+    var isInWatchlist = ViewData["IsInWatchlist"] as bool? ?? false;
 }
 
 <!-- Load Bootstrap Icons -->
@@ -41,6 +43,11 @@
         padding-bottom: 3rem;
     }
 </style>
+
+@using System.Security.Claims
+@{
+    var role = User.FindFirst(ClaimTypes.Role)?.Value;
+}
 
 <div class="movie-background">
     <div class="container movie-content">
@@ -119,10 +126,6 @@
                     <i class="bi bi-arrow-left me-1"></i> Back
                 </a>
 
-                @{
-                    var role = Context.Session.GetString("Role");
-                }
-
                 @if (role == "Admin")
                 {
                     <a asp-action="Edit" asp-route-id="@Model.ID" class="btn btn-link text-light mb-2 text-decoration-none">
@@ -131,12 +134,26 @@
                 }
                 else if (role == "User")
                 {
-                    <button class="btn btn-link text-light mb-2 text-decoration-none">
-                        <i class="bi bi-bookmark me-1"></i> Watchlist
-                    </button>
-                    <button class="btn btn-link text-light mb-2 text-decoration-none">
-                        <i class="bi bi-star me-1"></i> Rate
-                    </button>
+                    @if (isInWatchlist)
+                    {
+                        <button class="btn btn-warning text-dark mb-2 text-decoration-none" disabled>
+                            <i class="bi bi-bookmark-check-fill me-1"></i> In Watchlist
+                        </button>
+                    }
+                    else
+                    {
+                        <form asp-controller="Watchlist" asp-action="Create" method="post" class="mb-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="movieId" value="@Model.ID" />
+                            <button type="submit" class="btn btn-link text-light text-decoration-none">
+                                <i class="bi bi-bookmark me-1"></i> Add to Watchlist
+                            </button>
+                        </form>
+                    }
+
+                    @* <button class="btn btn-link text-light mb-2 text-decoration-none"> *@
+                    @*     <i class="bi bi-star me-1"></i> Rate *@
+                    @* </button> *@
                     <a asp-action="OrderTicket" asp-route-id="@Model.ID" class="btn btn-link text-light text-decoration-none">
                         <i class="bi bi-ticket-perforated me-1"></i> Order Ticket
                     </a>
@@ -155,6 +172,77 @@
 
 <!-- Reviews Section -->
 <div class="container mt-5">
+    @{
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    }
+
+    @if (isAuthenticated && role == "User" && !string.IsNullOrEmpty(userId))
+
+    {
+        <hr />
+        <h5 class="text-dark mt-4">Leave a Review</h5>
+        <form asp-controller="Reviews" asp-action="LeaveReview" method="post" id="reviewForm">
+            <input type="hidden" name="MovieID" value="@Model.ID" />
+            <input type="hidden" name="UserID" value="@userId" />
+            <input type="hidden" name="Rating" id="selectedRating" value="0" />
+
+            <div class="mb-3">
+                <label class="form-label d-block">Your Rating</label>
+                <div id="starRating" class="text-warning fs-4">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi bi-star" data-value="@i" style="cursor:pointer;"></i>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="Comment" class="form-label">Comment</label>
+                <textarea name="Comment" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+
+        @section Scripts {
+        <script>
+            const stars = document.querySelectorAll('#starRating .bi');
+            const ratingInput = document.getElementById('selectedRating');
+
+            stars.forEach(star => {
+                star.addEventListener('mouseenter', () => {
+                    const val = parseInt(star.getAttribute('data-value'));
+                    highlightStars(val);
+                });
+
+                star.addEventListener('mouseleave', () => {
+                    highlightStars(parseInt(ratingInput.value));
+                });
+
+                star.addEventListener('click', () => {
+                    const val = parseInt(star.getAttribute('data-value'));
+                    ratingInput.value = val;
+                    highlightStars(val);
+                });
+            });
+
+            function highlightStars(value) {
+                stars.forEach(star => {
+                    const starValue = parseInt(star.getAttribute('data-value'));
+                    if (starValue <= value) {
+                        star.classList.remove('bi-star');
+                        star.classList.add('bi-star-fill');
+                    } else {
+                        star.classList.remove('bi-star-fill');
+                        star.classList.add('bi-star');
+                    }
+                });
+            }
+        </script>
+        }
+    }
+
     <h3 class="text-dark">Reviews</h3>
     <div class="list-group">
         @if (Model.Reviews != null && Model.Reviews.Any())
@@ -172,7 +260,7 @@
                                      class="rounded-circle me-2"
                                      style="width: 40px; height: 40px; object-fit: cover;" />
                             }
-                            <span class="fw-bold">@review.User?.Username ?? "Anonymous"</span>
+                            <span class="fw-bold">@review.User.Username</span>
                         </div>
                         <div class="text-muted small">
                             @review.CreatedAt.ToString("d")
